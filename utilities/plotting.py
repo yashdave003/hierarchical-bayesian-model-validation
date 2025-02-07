@@ -15,7 +15,7 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
     for col in cols:
         df[col] = df[col].replace({True: col[5:], False: ''})
     df['map'] = df.apply(lambda row : ''.join([row.loc[col].capitalize() +'' for col in cols]), axis = 1)
-    temp = df[(df['map'] != '') & (df['map'] != 'Kurt')]
+    temp = df[(df['map'] != '') & (df['map'] != 'Var')&(df['map'] != 'Kurt') & (df['map'] != 'KurtVar')]
     df = df[(df['r'] >= temp['r'].min() - extra_boundary) & 
             (df['r'] <= temp['r'].max() + extra_boundary) &
             (df['eta'] >= temp['eta'].min() - extra_boundary) & 
@@ -50,7 +50,6 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
         sns.lineplot(x=r_vals, y=eta_vals, label=f'target_var:{np.round(target_var, 4)}', ax=ax)
     if best_param is not None:
         sns.scatterplot(x = [best_param[0]], y = [best_param[1]], marker='*', s = 60, c = 'xkcd:electric pink', ax=ax, label = f'Best: {best_param}', edgecolor='none')
-
     plt.legend(loc = 'lower right')
     if plot_name:
         plt.title(plot_name)
@@ -378,8 +377,6 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         if interval:
             ax1.set_xlim(left = interval[0], right = interval[1])
 
-        
-
         if len(sample) > 0:
             ax1.plot(sample, np.arange(1, n+1)/n, label='Empirical CDF')
             result = stats.ks_1samp(sample, null_cdf)
@@ -397,8 +394,6 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
             computed_cdf_at_provided_loc = null_cdf(provided_loc)
             ax1.vlines(provided_loc, emp_cdf_at_provided_loc, computed_cdf_at_provided_loc, linestyles='--', label=f'Deviation: {np.round(emp_cdf_at_provided_loc - computed_cdf_at_provided_loc, 6)}\nat x={np.round(provided_loc, 6)}', color='xkcd:shamrock green')
 
-        
-        
         # Empirical PDF vs Computed PDF
         ax2.set_xlim(left = -25, right = 25)
         if interval:
@@ -414,7 +409,6 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         ax3.set_ylim(bottom = 10**-4, top=10)
         sns.kdeplot(ax = ax3, x = sample, bw_method = bw, log_scale=[False, True], label = f"Empirical PDF (KDE, bw={bw_log})")
         ax3.plot(xs_pdf, null_pdf, label = "Computed PDF")
-
 
         if len(sample) == 0:
             ax1.set_title(f'Visualized {distro} CDF with params {params}')
