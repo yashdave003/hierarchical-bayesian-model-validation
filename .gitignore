@@ -2,3 +2,4 @@ sandbox/
 raw-data/
 extraCDFs/
 **/.DS_Store
+__pycache__/
