@@ -2,6 +2,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
+from matplotlib.colors import LogNorm
 from testing import *
 
 GROUP_NAME = 'Group (Layer/Band)'
@@ -9,7 +10,7 @@ GROUP_NAME = 'Group (Layer/Band)'
 def get_random_color():
     return np.random.choice(list(mcolors.CSS4_COLORS.values()))
 
-def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var = None, best_param=None):
+def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var = None, best_param=None, best_ksstat=None):
     cols = sorted(cols)
     df = df.copy() 
     for col in cols:
@@ -50,15 +51,19 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
         sns.lineplot(x=r_vals, y=eta_vals, label=f'target_var:{np.round(target_var, 4)}', ax=ax)
     if best_param is not None:
         sns.scatterplot(x = [best_param[0]], y = [best_param[1]], marker='*', s = 60, c = 'xkcd:electric pink', ax=ax, label = f'Best: {best_param}', edgecolor='none')
+    if best_ksstat is not None:
+        sns.scatterplot(x = 0, y = 0, marker='*', s = 1, c = 'xkcd:electric pink', ax=ax, label = f'KS Stat: {np.round(best_ksstat, decimals=3)}', edgecolor='none')
     plt.legend(loc = 'lower right')
     if plot_name:
         plt.title(plot_name)
     else:
         plt.title(f"{', '.join([col[5:].capitalize() for col in cols])} with boundary {extra_boundary}")
+
+   
     plt.show()
     return fig
 
-def create_scatter_plot(df, metric=None):
+def create_scatter_plot(df, metric=None, log_scale=False):
     """
     Create a scatter plot, where the color of each point represents the value from the specified metric column.
     If metric=None, plot all the (r, eta) values in df.
@@ -66,17 +71,19 @@ def create_scatter_plot(df, metric=None):
     Arguments:
     df : A pandas DataFrame containing the columns 'r', 'eta', and the specified metric column.
     metric : The name of the column in the DataFrame to use for color mapping.
+    log_scale : Boolean, if True, the color scale of the plot will be logarithmic.
     """
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(8, 8))
 
     if metric:
         if pd.api.types.is_numeric_dtype(df[metric]):
-            scatter = ax.scatter(df['r'], df['eta'], c=df[metric], cmap='viridis', alpha=1)
+            norm = LogNorm() if log_scale else None
+            scatter = ax.scatter(df['r'], df['eta'], c=df[metric], cmap='viridis', alpha=1, norm=norm)
             cbar = fig.colorbar(scatter, ax=ax)
             cbar.set_label(metric)
         else:
             categories = df[metric].unique()
-            color_map = plt.colormaps['accent']  # Updated line
+            color_map = plt.colormaps['accent']
             colors = {cat: color_map(i/len(categories)) for i, cat in enumerate(categories)}
             
             for cat in categories:

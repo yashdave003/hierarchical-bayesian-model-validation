@@ -7,7 +7,7 @@ import pickle
 import os
 import pywt.data
 from PIL import Image
-
+import warnings
 import scipy.special
 from tqdm import tqdm
 import git 
@@ -61,9 +61,7 @@ def compute_prior_pdf(r, eta, method='gamma_cdf', n_samples = 1000, tail_bound =
     elif method == 'normal_cdf':
         xs, cdf = compute_prior_cdf_using_normal_cdf(r=r, eta=eta, n_samples=n_samples, tail_bound=tail_bound, tail_percent=tail_percent, scale=scale, use_matlab=use_matlab, eng=eng, enforce_assert=enforce_assert, return_assert=return_assert, return_xs=True)
         return xs, cdf.derivative()
-    elif method == 'numerical_old':
-        return compute_prior_pdf_using_numerical_old(r=r, eta=eta, n_samples=n_samples, tail_bound=tail_bound, tail_percent=tail_percent, scale=scale, use_matlab=use_matlab, eng=eng, enforce_assert=enforce_assert, return_assert=return_assert, return_xs=True)
-
+    
 def compute_prior_cdf(r, eta, method='gamma_cdf', n_samples = 1000, tail_bound = 0.001, tail_percent = 0.1, scale = 1, use_matlab=True, eng=eng, debug=True, enforce_assert=True, return_assert=False, return_xs=False):
 
     if method == 'gamma_cdf':
