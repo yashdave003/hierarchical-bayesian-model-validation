@@ -3,3 +3,4 @@ raw-data/
 extraCDFs/
 **/.DS_Store
 utilities/__pycache__/
+transformed-data/old/

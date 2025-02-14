@@ -61,12 +61,12 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
     else:
         plt.title(f"{', '.join([col[5:].capitalize() for col in cols])} with boundary {extra_boundary}")
         
-    create_scatter_plot(df, 'ksstat', True) 
+    create_scatter_plot(df=df, metric='ksstat', plot_name=f"KS Stats + {plot_name if plot_name else ''}", log_colorbar=True) 
     
     plt.show()
     return fig
 
-def create_scatter_plot(df, metric=None, log_scale=False):
+def create_scatter_plot(df, metric=None, plot_name = '', log_colorbar=False):
     """
     Create a scatter plot, where the color of each point represents the value from the specified metric column.
     If metric=None, plot all the (r, eta) values in df.
@@ -80,7 +80,7 @@ def create_scatter_plot(df, metric=None, log_scale=False):
 
     if metric:
         if pd.api.types.is_numeric_dtype(df[metric]):
-            norm = LogNorm() if log_scale else None
+            norm = LogNorm() if log_colorbar else None
             scatter = ax.scatter(df['r'], df['eta'], c=df[metric], cmap='viridis', alpha=1, norm=norm)
             cbar = fig.colorbar(scatter, ax=ax)
             cbar.set_label(metric)
@@ -95,8 +95,10 @@ def create_scatter_plot(df, metric=None, log_scale=False):
                            c=[colors[cat]], label=cat, alpha=1)
             
             ax.legend(title=metric)
-
-        ax.set_title(f'(r, eta) pairs colored by {metric}')
+        if plot_name:
+            ax.set_title(plot_name)
+        else:
+            ax.set_title(f'(r, eta) pairs colored by {metric}')
     else:
         sns.scatterplot(x=df['r'], y=df['eta'], color='xkcd:gray', alpha=0.5, ax=ax, edgecolor='none')
         ax.set_title('(r, eta) pairs for which CDFs are computed (Linear eta)')
