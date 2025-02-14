@@ -13,6 +13,7 @@ def get_random_color():
 def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var = None, best_param=None, best_ksstat=None):
     cols = sorted(cols)
     df = df.copy() 
+
     for col in cols:
         df[col] = df[col].replace({True: col[5:], False: ''})
     df['map'] = df.apply(lambda row : ''.join([row.loc[col].capitalize() +'' for col in cols]), axis = 1)
@@ -21,6 +22,7 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
             (df['r'] <= temp['r'].max() + extra_boundary) &
             (df['eta'] >= temp['eta'].min() - extra_boundary) & 
             (df['eta'] <= temp['eta'].max() + extra_boundary)]
+    
     fixed_palette = {
     'Var': 'xkcd:dark yellow',
     'Kstest': 'blue',
@@ -51,15 +53,16 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
         sns.lineplot(x=r_vals, y=eta_vals, label=f'target_var:{np.round(target_var, 4)}', ax=ax)
     if best_param is not None:
         sns.scatterplot(x = [best_param[0]], y = [best_param[1]], marker='*', s = 60, c = 'xkcd:electric pink', ax=ax, label = f'Best: {best_param}', edgecolor='none')
-    if best_ksstat is not None:
-        sns.scatterplot(x = 0, y = 0, marker='*', s = 1, c = 'xkcd:electric pink', ax=ax, label = f'KS Stat: {np.round(best_ksstat, decimals=3)}', edgecolor='none')
-    plt.legend(loc = 'lower right')
+        if best_ksstat is not None:
+            sns.scatterplot(x = [best_param[0]], y = [best_param[1]], marker='*', s = 1, c = 'xkcd:electric pink', ax=ax, label = f'KS Stat: {np.round(best_ksstat, decimals=5)}', edgecolor='none')
+    plt.legend(loc = 'upper right')
     if plot_name:
         plt.title(plot_name)
     else:
         plt.title(f"{', '.join([col[5:].capitalize() for col in cols])} with boundary {extra_boundary}")
-
-   
+        
+    create_scatter_plot(df, 'ksstat', True) 
+    
     plt.show()
     return fig
 
