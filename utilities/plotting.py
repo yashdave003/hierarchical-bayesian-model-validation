@@ -18,11 +18,17 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
         df[col] = df[col].replace({True: col[5:], False: ''})
     df['map'] = df.apply(lambda row : ''.join([row.loc[col].capitalize() +'' for col in cols]), axis = 1)
     temp = df[(df['map'] != '') & (df['map'] != 'Var')&(df['map'] != 'Kurt') & (df['map'] != 'KurtVar')]
-    df = df[(df['r'] >= temp['r'].min() - extra_boundary) & 
+    
+    if len(temp) == 0:
+        df = df[(df['r'] >= best_param[0] - extra_boundary) & 
+            (df['r'] <= best_param[0] + extra_boundary) &
+            (df['eta'] >= best_param[1] - extra_boundary) & 
+            (df['eta'] <= best_param[1] + extra_boundary)]
+    else:
+        df = df[(df['r'] >= temp['r'].min() - extra_boundary) & 
             (df['r'] <= temp['r'].max() + extra_boundary) &
             (df['eta'] >= temp['eta'].min() - extra_boundary) & 
             (df['eta'] <= temp['eta'].max() + extra_boundary)]
-    
     fixed_palette = {
     'Var': 'xkcd:dark yellow',
     'Kstest': 'blue',
