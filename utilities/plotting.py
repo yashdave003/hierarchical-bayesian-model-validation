@@ -66,8 +66,8 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
         plt.title(plot_name)
     else:
         plt.title(f"{', '.join([col[5:].capitalize() for col in cols])} with boundary {extra_boundary}")
-        
-    create_scatter_plot(df=df, metric='ksstat', plot_name=f"KS Stats + {plot_name if plot_name else ''}", log_colorbar=True) 
+    if len(df) > 0:
+        create_scatter_plot(df=df, metric='ksstat', plot_name=f"KS Stats + {plot_name if plot_name else ''}", log_colorbar=True) 
     
     plt.show()
     return fig
