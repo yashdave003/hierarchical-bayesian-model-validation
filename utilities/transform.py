@@ -144,7 +144,7 @@ def convert_fourier_list(folder_dir, c, coord_df = None, debug = False, image_op
         if image_func != None:
             image = image_func(image)
 
-        transformed = np.array(fft.fft2(image))
+        transformed = np.array(fft.fft2(image, norm='ortho'))
         freq_arr[k] = transformed[tuple(x), tuple(y)]
         mag_arr[k] = magnitudes
     sample = np.concatenate(np.array(freq_arr).T)
@@ -414,7 +414,7 @@ def fourier_full_decomp(folder_dir, color, coord_df= None, debug = False, image_
                 image = image_opener(file_list[k])[:,:,c]
             else:
                 image = np.array(Image.open(file_list[k]))[:,:,c]
-        transformed = np.array(fft.fft2(image))
+        transformed = np.array(fft.fft2(image, norm='ortho'))
         freq_arr[k] = transformed[tuple(x), tuple(y)]
     coord_df["Data"]  = list(np.array(freq_arr).T)
     return coord_df
