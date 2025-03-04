@@ -347,7 +347,9 @@ def visualize_cdf(params, sample = [], distro='gengamma', n_samples=1000, interv
 
     return fig
 
-def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, n_samples=1000, interval = None, provided_loc = None, group=None, bw = 0.05, bw_log = 0.05):
+
+
+def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, n_samples=2000, interval = None, provided_loc = None, group=None, percent_excluded=0.1, plot_hist=True, bw = 0.05, bw_log = 0.05):
     """
     Visualize the gap between the empirical CDF/PDF and the Computed CDF/PDF.
 
@@ -364,9 +366,16 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         location (float): The location of the maximum deviation between the empirical and computed CDFs.
     """
     if len(sample) > 0:
-        xs = np.linspace(max(-100000, np.min(sample)), min(np.max(sample), 100000), 2000000)
+        
+        lower_bound = np.percentile(sample, percent_excluded/2)
+        upper_bound = np.percentile(sample, (100-percent_excluded/2))
+        sample = sample[(sample > lower_bound) & (sample < upper_bound)]
         sample = np.sort(sample)
         n = len(sample)
+        # If interval not specified, set to include 99% of the data
+        if interval is None:
+            interval = (np.percentile(sample, 5), np.percentile(sample, 95))
+        xs = np.linspace(max(interval[0], np.min(sample)), min(np.max(sample), interval[1]), 2000000)
     
     if distro == 'gengamma':
         if len(params) == 3:
@@ -389,9 +398,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
     if log_scale:
 
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(24, 6))
-
-        # Empirical CDF vs Computed CDF
-        ax1.set_xlim(left = -25, right = 25)
+        fig.suptitle(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical CDF vs Computed CDF \n (r={r}, eta={eta}, scale={np.format_float_scientific(scale, 3)})', fontsize=14)
         if interval:
             ax1.set_xlim(left = interval[0], right = interval[1])
 
@@ -403,7 +410,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
             emp_cdf_at_loc = np.searchsorted(sample, location, side='right') / n
             computed_cdf_at_loc = null_cdf(location)
             ax1.plot(xs, null_cdf(xs), label='Computed CDF')
-            ax1.vlines(location, emp_cdf_at_loc, computed_cdf_at_loc, linestyles='--', label=f'Maximum Deviation: {np.round(distance, 6)}\nat x={np.round(location, 6)}', color='xkcd:bright red')
+            ax1.vlines(location, emp_cdf_at_loc, computed_cdf_at_loc, linestyles='--', label=f'Maximum Deviation: {np.round(distance, 6)}\nat x={np.format_float_scientific(location, 3)}', color='xkcd:bright red')
         else:
             ax1.plot(xs_pdf, null_cdf(xs_pdf), label='Computed CDF')
 
@@ -412,73 +419,42 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
             computed_cdf_at_provided_loc = null_cdf(provided_loc)
             ax1.vlines(provided_loc, emp_cdf_at_provided_loc, computed_cdf_at_provided_loc, linestyles='--', label=f'Deviation: {np.round(emp_cdf_at_provided_loc - computed_cdf_at_provided_loc, 6)}\nat x={np.round(provided_loc, 6)}', color='xkcd:shamrock green')
 
-        # Empirical PDF vs Computed PDF
-        ax2.set_xlim(left = -25, right = 25)
         if interval:
             ax2.set_xlim(left = interval[0], right = interval[1])
         
-        sns.kdeplot(sample, bw_method = bw, ax=ax2, label=f'Empirical PDF (KDE, bw={bw})')
+        if len(sample)>0:
+            sns.kdeplot(sample[(sample >= interval[0]) & (sample <= interval[1])], bw_method = bw, ax=ax2, label=f'Empirical PDF (KDE, bw={bw})')
+            if plot_hist:
+                sns.histplot(sample, ax=ax2, stat='density', label=f'Empirical PDF ({100-percent_excluded}% of sample)', alpha=0.2)
         ax2.plot(xs_pdf, null_pdf, label='Computed PDF')
-        
-        # Log Scale
-        ax3.set_xlim(left = -25, right = 25)
+       
         if interval:
             ax3.set_xlim(left = interval[0], right = interval[1])
         ax3.set_ylim(bottom = 10**-4, top=10)
-        sns.kdeplot(ax = ax3, x = sample, bw_method = bw, log_scale=[False, True], label = f"Empirical PDF (KDE, bw={bw_log})")
-        ax3.plot(xs_pdf, null_pdf, label = "Computed PDF")
+        
+        if len(sample)>0:
+            sns.kdeplot(ax = ax3, x = sample, bw_method = bw_log, log_scale=[False, True], label = f"Empirical PDF (KDE, bw={bw_log})")
+            if plot_hist:
+                ax3.hist(sample, density=True, log=True, bins=1000, alpha=0.2, color='#1f77b4', label=f'Empirical PDF ({100-percent_excluded}% of sample)')
 
+        ax3.plot(xs_pdf, null_pdf, label = "Computed PDF")
+        
         if len(sample) == 0:
             ax1.set_title(f'Visualized {distro} CDF with params {params}')
             ax2.set_title(f'Visualized {distro} PDF with params {params}')
             ax3.set_title(f'Visualized {distro} PDF (log-scale) with params {params}')
         elif distro == 'gengamma':
-            ax1.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical CDF vs Computed CDF \n (r={r}, eta={eta}) with p-value:{np.round(result.pvalue, 8)}')
-            ax2.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical PDF vs Computed PDF \n (r={r}, eta={eta})')
-            ax3.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Log Scale:\n Empirical PDF vs Computed PDF (r={r}, eta={eta})')
-        else:
-            ax1.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical CDF vs Computed CDF \n {distro} (0, {params})')
-            ax2.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical PDF vs Computed PDF \n {distro} (0, {params})')
-            ax3.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Log Scale:\n Empirical PDF vs Computed PDF {distro} (0, {params})')
-
+            ax1.set_title(f'Empirical CDF vs Computed CDF (p-value:{np.format_float_scientific(result.pvalue, 4)})')
+            ax2.set_title(f'Empirical PDF vs Computed PDF')
+            ax3.set_title(f'Log Scale: Empirical PDF vs Computed PDF')
         ax1.legend()
         ax2.legend()
         ax3.legend()
 
         plt.tight_layout()
         plt.show()
-
-    else:
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-
-        # Empirical CDF vs Computed CDF
-        ax1.set_xlim(left = -25, right = 25)
-        ax1.plot(sample, np.arange(1, n+1)/n, label='Empirical CDF')
-        ax1.plot(xs, null_cdf(xs), label='Computed CDF')
-        result = stats.ks_1samp(sample, null_cdf)
-        distance = result.statistic
-        location = result.statistic_location
-        emp_cdf_at_loc = np.searchsorted(sample, location, side='right') / n
-        computed_cdf_at_loc = null_cdf(location)
-        ax1.vlines(location, emp_cdf_at_loc, computed_cdf_at_loc, linestyles='--', label=f'Maximum Deviation: {np.round(distance, 6)}\nat x={np.round(location, 6)}', color='xkcd:bright red')
-        if distro =='gengamma':
-            ax1.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical CDF vs Computed CDF \n (r={r}, eta={eta}) with p-value:{np.round(result.pvalue, 8)}')
-            ax2.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical PDF vs Computed PDF \n (r={r}, eta={eta})')
-        else:
-            ax1.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical CDF vs Computed CDF \n {distro} (0, {params})')
-            ax2.set_title(f'{f"{GROUP_NAME} {group}" if group else ""} Empirical PDF vs Computed PDF \n {distro} (0, {params})')
-        ax1.legend()
-
-        # Empirical PDF vs Computed PDF
-        ax2.set_xlim(left = -25, right = 25)
-        sns.kdeplot(sample, bw_method = bw, ax=ax2, label=f'Empirical PDF (KDE, bw={bw})')
-        ax2.plot(xs_pdf, null_pdf, label='Computed PDF')
-        ax2.legend()
-    
+        
     return fig
-
-
 
 def twoSampleComparisonPlots(samp1, samp2, bw =0.2, samp1name = "Sample 1", samp2name = "Sample 2"):
     n_1 = len(samp1)
