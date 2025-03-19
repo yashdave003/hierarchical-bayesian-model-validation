@@ -456,7 +456,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         
     return fig
 
-def twoSampleComparisonPlots(samp1, samp2, bw =0.2, samp1name = "Sample 1", samp2name = "Sample 2"):
+def twoSampleComparisonPlots(samp1, samp2, bw =0.2, samp1name = "Sample 1", samp2name = "Sample 2", alpha = 0.2, plot_hist = True):
     n_1 = len(samp1)
     n_2 = len(samp2)
     ksres = stats.ks_2samp(samp1, samp2)
@@ -470,6 +470,11 @@ def twoSampleComparisonPlots(samp1, samp2, bw =0.2, samp1name = "Sample 1", samp
     sns.kdeplot(ax = axes[0], x = samp2,bw_method = bw, label = samp2name)
     sns.kdeplot(ax = axes[1], x = samp1, bw_method = bw, log_scale=[False, True], label = samp1name)
     sns.kdeplot(ax = axes[1], x = samp2, bw_method = bw, log_scale=[False, True], label = samp2name)
+    if plot_hist:
+        sns.histplot(ax = axes[0], x = samp1, stat='density', label = samp1name, alpha=alpha)
+        sns.histplot(ax = axes[0], x = samp2, stat='density', label = samp2name, alpha=alpha)
+        sns.histplot(ax = axes[1], x = samp1, log = True, stat='density', label = samp1name, alpha=alpha)
+        sns.histplot(ax = axes[1], x = samp2, log = True, stat='density', label = samp2name, alpha=alpha)
     axes[2].plot(np.sort(samp1), np.arange(1, n_1+1)/n_1, label=samp1name)
     axes[2].plot(np.sort(samp2), np.arange(1, n_2+1)/n_2, label=samp2name)
     emp_cdf_at_loc = np.searchsorted(np.sort(samp1), ks_loc, side='right') / n_1
@@ -485,7 +490,7 @@ def twoSampleComparisonPlots(samp1, samp2, bw =0.2, samp1name = "Sample 1", samp
     return fig
 
 
-def multiSampleComparisonPlots(samps,  samp_names, bw =0.2):
+def multiSampleComparisonPlots(samps,  samp_names, bw =0.2, alpha = 0.2, hist_plot = True):
     fig, axes = plt.subplots(1, 3, figsize=(24, 6))
     for i in range(len(samps)):
         n_1 = len(samps[i])
@@ -495,6 +500,11 @@ def multiSampleComparisonPlots(samps,  samp_names, bw =0.2):
         #axes[2].set_xlim(left = -.25*bound, right = .25*bound)
         sns.kdeplot(ax = axes[0], x = samps[i], bw_method=bw, label = samp_names[i])
         sns.kdeplot(ax = axes[1], x = samps[i], bw_method = bw, log_scale=[False, True], label = samp_names[i])
+
+        if hist_plot:
+            sns.histplot(ax = axes[0], x = samps[i], stat='density', label = samp_names[i], alpha=alpha)
+            sns.histplot(ax = axes[1], x = samps[i], log = True, stat='density', label = samp_names[i], alpha=alpha)
+
         axes[2].plot(np.sort(samps[i]), np.arange(1, n_1+1)/n_1, label=samp_names[i])
 
         
