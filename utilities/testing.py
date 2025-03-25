@@ -630,8 +630,6 @@ def create_kurt_var_ksstat_df(cdf_dict):
     cdfs_df['cdf'] = pd.Series(cdfs_df["(r,eta),cdf"].str[1])
     cdfs_df['variance'] = np.nan_to_num(cdfs_df.apply(lambda row : variance_prior(row.loc['r'], row.loc['eta']), axis = 1))
     cdfs_df['kurtosis'] = cdfs_df.apply(lambda row : kurtosis_prior(row.loc['r'], row.loc['eta']), axis = 1)
-    # cdfs_df['MAD'] = cdfs_df.apply(lambda row : MAD_prior(row.loc['r'], row.loc['eta']), axis = 1)
-    # cdfs_df['MAD'] = cdfs_df['MAD'].fillna(0)
     return cdfs_df
 
 def add_tests_to_df(cdfs_df, group, var_kurt_df, ksstats):
@@ -650,3 +648,9 @@ def remove_directory(directory_path):
         for name in dirs:
             os.rmdir(os.path.join(root, name))
     os.rmdir(directory_path)
+
+def generate_cutoff_label(adjust_exclude_cutoff):
+    if adjust_exclude_cutoff == 0:
+        return "0"
+    else:
+        return f"plus{adjust_exclude_cutoff}" if adjust_exclude_cutoff >0 else f"minus{-adjust_exclude_cutoff}"
