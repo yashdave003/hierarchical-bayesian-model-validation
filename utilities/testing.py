@@ -650,7 +650,4 @@ def remove_directory(directory_path):
     os.rmdir(directory_path)
 
 def generate_cutoff_label(adjust_exclude_cutoff):
-    if adjust_exclude_cutoff == 0:
-        return "0"
-    else:
-        return f"plus{adjust_exclude_cutoff}" if adjust_exclude_cutoff >0 else f"minus{-adjust_exclude_cutoff}"
+    return f"plus{adjust_exclude_cutoff}" if adjust_exclude_cutoff >=0 else f"minus{-adjust_exclude_cutoff}"
