@@ -26,7 +26,10 @@ def npz_opener(path):
     
 def rgb2gray(rgb):
     # Based on luminance perception of human vision. This is usually what is going on under the hood.
-    return rgb.dot([0.2989, 0.5870, 0.1140])
+    if len(rgb.shape) != 3:
+        return rgb
+    else:
+        return rgb.dot([0.2989, 0.5870, 0.1140])
 
 def convert_to_wavelet_basis(folder_dir, color, basis="db1", image_func = None, debug = False, image_opener = None):
     file_list = [os.path.join(folder_dir, filename) for filename in os.listdir(folder_dir) if filename != ".DS_Store"]
