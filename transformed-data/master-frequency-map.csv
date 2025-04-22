@@ -32,7 +32,7 @@ pastis,fourier,31,0.5766817285915549
 pastis,fourier,32,0.622862825390853
 pastis,fourier,33,0.6714939803286939
 pastis,wavelet,2,0.1423012784880489
-pastis,wavelet,3,0.166018158236057
+pastis,wavelet,3,0.16601815823605706
 pastis,wavelet,4,0.1992217898832685
 pastis,wavelet,5,0.2490272373540856
 pastis,wavelet,6,0.3320363164721141
@@ -181,7 +181,7 @@ coco-indoor,wavelet,8,0.4980544747081712
 coco-indoor,wavelet,9,0.9961089494163424
 coco-outdoor,wavelet,2,0.1245136186770428
 coco-outdoor,wavelet,3,0.1423012784880489
-coco-outdoor,wavelet,4,0.16601815823605706
+coco-outdoor,wavelet,4,0.166018158236057
 coco-outdoor,wavelet,5,0.1992217898832685
 coco-outdoor,wavelet,6,0.2490272373540856
 coco-outdoor,wavelet,7,0.3320363164721141
