@@ -4,5 +4,3 @@ extraCDFs/
 **/.DS_Store
 utilities/__pycache__/
 transformed-data/old/
-/results/case-studies/pastis/fourier/approx1e5/red/groupCDFs
-/results/case-studies/pastis/fourier/approx1e5/gray/groupCDFs
