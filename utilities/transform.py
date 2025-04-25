@@ -15,7 +15,7 @@ import pickle
 import nibabel as nib
 from scipy import ndimage
 from time import sleep
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 
 def npz_opener(path):

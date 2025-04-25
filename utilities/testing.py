@@ -9,7 +9,7 @@ import pywt.data
 from PIL import Image
 import warnings
 import scipy.special
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 import git 
 np.set_printoptions(legacy='1.25')
 
