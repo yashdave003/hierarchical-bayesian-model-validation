@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
 from matplotlib.colors import LogNorm
+from matplotlib.patches import Rectangle
 from testing import *
 
 GROUP_NAME = 'Group (Layer/Band)'
