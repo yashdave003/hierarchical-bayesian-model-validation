@@ -4,3 +4,4 @@ extraCDFs/
 **/.DS_Store
 utilities/__pycache__/
 transformed-data/old/
+results/case-studies/scheduler.ipynb
