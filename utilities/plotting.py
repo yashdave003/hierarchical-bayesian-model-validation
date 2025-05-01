@@ -350,7 +350,7 @@ def visualize_cdf(params, sample = [], distro='gengamma', n_samples=1000, interv
 
 
 
-def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, n_samples=2000, interval = None, provided_loc = None, group=None, percent_excluded=0.1, plot_hist=True, bw = 0.05, bw_log = 0.05):
+def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, n_samples=2000, interval = None, provided_loc = None, group=None, percent_excluded=0.1, plot_hist=True, bw = 0.05, bw_log = 0.05, binwidth = None):
     """
     Visualize the gap between the empirical CDF/PDF and the Computed CDF/PDF.
 
@@ -426,7 +426,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         if len(sample)>0:
             sns.kdeplot(sample[(sample >= interval[0]) & (sample <= interval[1])], bw_method = bw, ax=ax2, label=f'Empirical PDF (KDE, bw={bw})')
             if plot_hist:
-                sns.histplot(sample, ax=ax2, stat='density', label=f'Empirical PDF ({100-percent_excluded}% of sample)', alpha=0.2)
+                sns.histplot(sample, ax=ax2, binwidth = binwidth, stat='density', label=f'Empirical PDF ({100-percent_excluded}% of sample)', alpha=0.2)
         ax2.plot(xs_pdf, null_pdf, label='Computed PDF')
        
         if interval:
@@ -436,9 +436,9 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         if len(sample)>0:
             sns.kdeplot(ax = ax3, x = sample, bw_method = bw_log, log_scale=[False, True], label = f"Empirical PDF (KDE, bw={bw_log})")
             if plot_hist:
-                ax3.hist(sample, density=True, log=True, bins=1000, alpha=0.2, color='#1f77b4', label=f'Empirical PDF ({100-percent_excluded}% of sample)')
+                sns.histplot(sample, ax = ax3, binwidth = binwidth, stat = "density", log=True, bins=1000, alpha=0.2, color='#1f77b4', label=f'Empirical PDF ({100-percent_excluded}% of sample)')
 
-        ax3.plot(xs_pdf, null_pdf, label = "Computed PDF")
+        ax3.plot(xs_pdf, null_pdf, label = "Co|mputed PDF")
         
         if len(sample) == 0:
             ax1.set_title(f'Visualized {distro} CDF with params {params}')
