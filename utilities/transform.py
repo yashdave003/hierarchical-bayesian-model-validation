@@ -333,7 +333,9 @@ def uniqueMags(folder_dir, start = None, end = None, dim="2d", coord_df =None, i
 def convert_to_wavelet_basis_3d(folder_dir, basis="db1", image_func = None, debug = False):
     file_list = [os.path.join(folder_dir, filename) for filename in os.listdir(folder_dir) if filename != ".DS_Store"]
     #Setup df Dict
-    image = nib.load(file_list[0]).get_fdata()
+    #image = nib.load(file_list[0]).get_fdata()
+    data = np.load(file_list[0])
+    image = data['arr_0']
     first_image = pywt.wavedecn(image, basis)
     layer_len = len(first_image)
     direction_names = first_image[1].keys()
@@ -352,7 +354,10 @@ def convert_to_wavelet_basis_3d(folder_dir, basis="db1", image_func = None, debu
         loop = range(len(file_list))
     for k in loop:
 
-        image = np.array(nib.load(file_list[k]).get_fdata())
+        #image = np.array(nib.load(file_list[k]).get_fdata())
+        data = np.load(file_list[k])
+        image = data['arr_0']
+
 
         if image_func != None:
             image = image_func(image)
