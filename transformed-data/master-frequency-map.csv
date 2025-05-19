@@ -63,7 +63,7 @@ spaceNet,fourier,23,0.4900539220282205
 spaceNet,fourier,24,0.5900717370021368
 spaceNet,wavelet,2,0.1245136186770428
 spaceNet,wavelet,3,0.1423012784880489
-spaceNet,wavelet,4,0.16601815823605706
+spaceNet,wavelet,4,0.166018158236057
 spaceNet,wavelet,5,0.1992217898832685
 spaceNet,wavelet,6,0.2490272373540856
 spaceNet,wavelet,7,0.3320363164721141
@@ -187,3 +187,11 @@ coco-indoor,wavelet,6,0.2490272373540856
 coco-indoor,wavelet,7,0.3320363164721141
 coco-indoor,wavelet,8,0.4980544747081712
 coco-indoor,wavelet,9,0.9961089494163424
+syntheticMRI3D,wavelet,2,0.4980544747081712
+syntheticMRI3D,wavelet,3,0.3320363164721141
+syntheticMRI3D,wavelet,4,0.2490272373540856
+syntheticMRI3D,wavelet,5,0.1992217898832685
+syntheticMRI3D,wavelet,6,0.16601815823605706
+syntheticMRI3D,wavelet,7,0.1423012784880489
+syntheticMRI3D,wavelet,8,0.1245136186770428
+syntheticMRI3D,wavelet,9,0.1106787721573713
