@@ -370,6 +370,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         
         lower_bound = np.percentile(sample, percent_excluded/2)
         upper_bound = np.percentile(sample, (100-percent_excluded/2))
+        original_sample = sample
         sample = sample[(sample > lower_bound) & (sample < upper_bound)]
         sample = np.sort(sample)
         n = len(sample)
@@ -405,10 +406,10 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
 
         if len(sample) > 0:
             ax1.plot(sample, np.arange(1, n+1)/n, label='Empirical CDF')
-            result = stats.ks_1samp(sample, null_cdf)
+            result = stats.ks_1samp(original_sample, null_cdf)
             distance = result.statistic
             location = result.statistic_location
-            emp_cdf_at_loc = np.searchsorted(sample, location, side='right') / n
+            emp_cdf_at_loc = np.searchsorted(original_sample, location, side='right') / n
             computed_cdf_at_loc = null_cdf(location)
             ax1.plot(xs, null_cdf(xs), label='Computed CDF')
             ax1.vlines(location, emp_cdf_at_loc, computed_cdf_at_loc, linestyles='--', label=f'Maximum Deviation: {np.round(distance, 6)}\nat x={np.format_float_scientific(location, 3)}', color='xkcd:bright red')
@@ -416,7 +417,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
             ax1.plot(xs_pdf, null_cdf(xs_pdf), label='Computed CDF')
 
         if len(sample) > 0 and provided_loc:
-            emp_cdf_at_provided_loc = np.searchsorted(sample, provided_loc, side='right') / n
+            emp_cdf_at_provided_loc = np.searchsorted(original_sample, provided_loc, side='right') / n
             computed_cdf_at_provided_loc = null_cdf(provided_loc)
             ax1.vlines(provided_loc, emp_cdf_at_provided_loc, computed_cdf_at_provided_loc, linestyles='--', label=f'Deviation: {np.round(emp_cdf_at_provided_loc - computed_cdf_at_provided_loc, 6)}\nat x={np.round(provided_loc, 6)}', color='xkcd:shamrock green')
 
@@ -438,7 +439,7 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
             if plot_hist:
                 sns.histplot(sample, ax = ax3, binwidth = binwidth, stat = "density", log=True, bins=1000, alpha=0.2, color='#1f77b4', label=f'Empirical PDF ({100-percent_excluded}% of sample)')
 
-        ax3.plot(xs_pdf, null_pdf, label = "Co|mputed PDF")
+        ax3.plot(xs_pdf, null_pdf, label = "Computed PDF")
         
         if len(sample) == 0:
             ax1.set_title(f'Visualized {distro} CDF with params {params}')
