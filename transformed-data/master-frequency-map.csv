@@ -173,7 +173,7 @@ syntheticMRI2D,wavelet,8,0.4980544747081712
 syntheticMRI2D,wavelet,9,0.9961089494163424
 coco-outdoor,wavelet,2,0.1245136186770428
 coco-outdoor,wavelet,3,0.1423012784880489
-coco-outdoor,wavelet,4,0.166018158236057
+coco-outdoor,wavelet,4,0.16601815823605706
 coco-outdoor,wavelet,5,0.1992217898832685
 coco-outdoor,wavelet,6,0.2490272373540856
 coco-outdoor,wavelet,7,0.3320363164721141
@@ -191,7 +191,7 @@ syntheticMRI3D,wavelet,2,0.4980544747081712
 syntheticMRI3D,wavelet,3,0.3320363164721141
 syntheticMRI3D,wavelet,4,0.2490272373540856
 syntheticMRI3D,wavelet,5,0.1992217898832685
-syntheticMRI3D,wavelet,6,0.16601815823605706
+syntheticMRI3D,wavelet,6,0.166018158236057
 syntheticMRI3D,wavelet,7,0.1423012784880489
 syntheticMRI3D,wavelet,8,0.1245136186770428
 syntheticMRI3D,wavelet,9,0.1106787721573713
