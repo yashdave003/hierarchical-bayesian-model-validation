@@ -4,6 +4,7 @@ import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
 from matplotlib.colors import LogNorm
 from matplotlib.patches import Rectangle
+from scipy.optimize import curve_fit
 from testing import *
 
 GROUP_NAME = 'Group (Layer/Band)'
@@ -650,3 +651,163 @@ def KSHeatMapFullProcess(r, eta, n=10000, ks_max = 100000, r_bound=0.01, eta_bou
             print(f"{pass_pct*100}% of tests passed with the original bounds.")
     if return_vals:
         return [intial_fig, final_fig], [initial_r_bound, initial_eta_bound, initial_pct, r_bound, eta_bound, pass_pct]
+    
+
+
+
+
+
+def create_region_scatter_plot(df,  x_col = "r", y_col = "eta", metric=None, plot_name = '', log_colorbar=False):
+    """
+    Create a scatter plot, where the color of each point represents the value from the specified metric column.
+    If metric=None, plot all the (r, eta) values in df.
+
+    Arguments:
+    df : A pandas DataFrame containing the columns 'r', 'eta', and the specified metric column.
+    metric : The name of the column in the DataFrame to use for color mapping.
+    log_scale : Boolean, if True, the color scale of the plot will be logarithmic.
+    """
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    if metric:
+        if pd.api.types.is_numeric_dtype(df[metric]):
+            norm = LogNorm() if log_colorbar else None
+            scatter = ax.scatter(df[x_col], df[y_col], c=df[metric], cmap='viridis', alpha=1, norm=norm)
+            cbar = fig.colorbar(scatter, ax=ax)
+            cbar.set_label(metric)
+        else:
+            categories = df[metric].unique()
+            color_map = plt.colormaps['accent']
+            colors = {cat: color_map(i/len(categories)) for i, cat in enumerate(categories)}
+            
+            for cat in categories:
+                mask = df[metric] == cat
+                ax.scatter(df.loc[mask, x_col], df.loc[mask, y_col], 
+                           c=[colors[cat]], label=cat, alpha=1)
+            
+            ax.legend(title=metric)
+        if plot_name:
+            ax.set_title(plot_name)
+        else:
+            ax.set_title(f'({x_col}, {y_col}) pairs colored by {metric}')
+    else:
+        sns.scatterplot(x=df[x_col], y=df[y_col], color='xkcd:gray', alpha=0.5, ax=ax, edgecolor='none')
+        ax.set_title(f'({x_col}, {y_col}) pairs for which CDFs are computed (Linear eta)')
+
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(y_col)
+    plt.grid(which='both')
+    plt.show()
+
+    return fig
+
+
+from scipy.spatial import ConvexHull
+
+def region_reporting(rEtaKsstats_dict, master_df, layer = "all", MULT =1.2, plots=True, plot_name = ''):
+    if layer == "all":
+        layers = master_df.index
+    else:
+        layers = layer
+    hulls_df = pd.DataFrame(columns=["BAND", "hull"])
+    for BAND in layers:
+        
+        drop_keys =list(rEtaKsstats_dict[BAND].keys())[-3:]
+        print(drop_keys)
+        test = pd.DataFrame(rEtaKsstats_dict[BAND]).drop(drop_keys, axis = 1 )
+        test4 = pd.DataFrame(rEtaKsstats_dict[BAND])[drop_keys]
+        test4 = test4.rename(columns = {"r_optimize": "r", "eta_optimize": "eta", drop_keys[-1]: "ksstat"})
+        test4 = test4.dropna()
+        test = test.merge(test4, on=["r", "eta"], how="outer")
+        test = test.set_index(["r", "eta"])
+        test["ksstat"] = test.min(axis=1)
+        test = test.reset_index()
+        test = test[["r", "eta", "ksstat"]]
+        print(min(test["ksstat"]) * MULT, master_df.loc[BAND, "kstest_stat_cutoff_0.05"])
+        
+        cutoff = max(min(test["ksstat"]) * MULT, master_df.loc[BAND, "kstest_stat_cutoff_0.05"], 0.01)
+        if cutoff != master_df.loc[BAND, "kstest_stat_cutoff_0.05"]:
+            print(f"Layer {BAND}: None Passed")
+        test["map"] =  test["ksstat"].apply(lambda x: "pass" if x <= cutoff else "")
+        test["1/beta"] = test["r"]/(test["eta"] + 1.5)
+        test["log_r"] = np.log10(test["r"])
+        test["log_beta"] = np.log10((test["eta"] + 1.5)/ test["r"])
+        test["beta"] = (test["eta"] + 1.5) / test["r"]
+        test["1/log_beta"] = 1/np.log10((test["eta"] + 1.5)/ test["r"])
+
+    
+
+        test2 = test[test["ksstat"] <= cutoff]
+        
+        if plots:
+
+            #create_region_scatter_plot(test, x_col = "r", y_col = "eta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} eta space", log_colorbar=True)
+            create_region_scatter_plot(test2, x_col = "r", y_col = "eta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} eta space", log_colorbar=True)
+            #create_region_scatter_plot(test2, x_col = "r", y_col = "beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} eta space", log_colorbar=True)
+            #create_region_scatter_plot(test2, x_col = "log_r", y_col = "log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} log log space", log_colorbar=True)
+            #create_region_scatter_plot(test2, x_col = "r", y_col = "1/log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Band: {BAND} log log space", log_colorbar=True) 
+            #create_region_scatter_plot(test2, x_col = "r", y_col = "log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} log beta space", log_colorbar=True) 
+            #create_region_scatter_plot(test, x_col = "r", y_col = "1/beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Band: {BAND} 1/beta space", log_colorbar=True) 
+            create_region_scatter_plot(test2, x_col = "r", y_col = "1/beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} 1/beta space", log_colorbar=True) 
+
+
+        # Define a rational function: f(r) = (a * r^2 + b * r + c) / (d * r + e)
+
+        if len(test2) > 5:
+            def rational_func(r, a, b, c, d, e):
+                return (a * r**2 + b * r + c) / (d * r + e) 
+
+            def quadratic_func(r, a, b, c):
+                return a * r**2 + b * r + c
+
+            def linear_func(r, m, c):
+                return m * r + c
+
+            # Fit the rational function to the data
+            popt_rational, _ = curve_fit(rational_func, test2["r"], test2["1/beta"], maxfev=10000)
+
+            # Fit the quadratic function to the data
+            popt_quadratic, _ = curve_fit(quadratic_func, test2["r"], test2["1/beta"], maxfev=10000)
+
+            # Fit the linear function to the data
+            popt_linear, _ = curve_fit(linear_func, test2["r"], test2["1/beta"], maxfev=10000)
+
+            # Generate predictions using the fitted parameters
+            r_values = np.linspace(test2["r"].min(), test2["r"].max(), 500)
+            fitted_rational = rational_func(r_values, *popt_rational)
+            fitted_quadratic = quadratic_func(r_values, *popt_quadratic)
+            fitted_linear = linear_func(r_values, *popt_linear)
+
+            # Extract the fitted parameters
+            a, b, c, d, e = popt_rational
+            print(f"Rational Function Parameters: a={a}, b={b}, c={c}, d={d}, e={e}")
+            a_q, b_q, c_q = popt_quadratic
+            print(f"Quadratic Function Parameters: a={a_q}, b={b_q}, c={c_q}")
+            m, c_l = popt_linear
+            print(f"Linear Function Parameters: m={m}, c={c_l}")
+
+            points = np.column_stack((test2["r"], test2["1/beta"])) + stats.norm.rvs(size=(len(test2), 2)) * 0.001  # Adding small noise for convex hull computation
+            # Compute the convex hull
+            hull = ConvexHull(points)
+            hull_coordinates = points[hull.vertices]
+            hulls_df = pd.concat([hulls_df, pd.DataFrame({"BAND": [BAND], "hull": [hull_coordinates]})], ignore_index=True)
+            
+            if plots:
+                plt.figure(figsize=(8, 6))
+                plt.scatter(test2["r"], test2["1/beta"], label="Data", color="blue", alpha=0.6)
+                plt.plot(r_values, fitted_rational, label="Rational Function", color="red", linewidth=2)
+                plt.plot(r_values, fitted_quadratic, label="Quadratic Function", color="green", linestyle="--", linewidth=2)
+                plt.plot(r_values, fitted_linear, label="Linear Function", color="orange", linestyle=":", linewidth=2)
+
+                
+                # Plot the convex hull
+                for simplex in hull.simplices:
+                    plt.plot(points[simplex, 0], points[simplex, 1], color = "black")
+                    
+                plt.xlabel("r")
+                plt.ylabel("1/beta")
+                plt.title(f"{plot_name} Band: {BAND} Fitted Functions")
+                plt.legend()
+                plt.grid()
+                plt.show()
+    return hulls_df
