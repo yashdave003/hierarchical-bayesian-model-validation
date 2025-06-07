@@ -5,6 +5,7 @@ from matplotlib.lines import Line2D
 from matplotlib.colors import LogNorm
 from matplotlib.patches import Rectangle
 from scipy.optimize import curve_fit
+from scipy.spatial import ConvexHull
 from testing import *
 
 GROUP_NAME = 'Group (Layer/Band)'
@@ -702,15 +703,16 @@ def create_region_scatter_plot(df,  x_col = "r", y_col = "eta", metric=None, plo
     return fig
 
 
-from scipy.spatial import ConvexHull
 
-def region_reporting(rEtaKsstats_dict, master_df, layer = "all", MULT =1.2, plots=True, plot_name = ''):
+
+def region_reporting(rEtaKsstats_dict, master_df, layer = "all", MULT =1.2, kind = "Layer", plots=True, plot_name = ''):
     if layer == "all":
         layers = master_df.index
     else:
         layers = layer
     hulls_df = pd.DataFrame(columns=["BAND", "hull"])
     for BAND in layers:
+
         
         drop_keys =list(rEtaKsstats_dict[BAND].keys())[-3:]
         print(drop_keys)
@@ -741,14 +743,14 @@ def region_reporting(rEtaKsstats_dict, master_df, layer = "all", MULT =1.2, plot
         
         if plots:
 
-            #create_region_scatter_plot(test, x_col = "r", y_col = "eta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} eta space", log_colorbar=True)
-            create_region_scatter_plot(test2, x_col = "r", y_col = "eta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} eta space", log_colorbar=True)
-            #create_region_scatter_plot(test2, x_col = "r", y_col = "beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} eta space", log_colorbar=True)
-            #create_region_scatter_plot(test2, x_col = "log_r", y_col = "log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} log log space", log_colorbar=True)
-            #create_region_scatter_plot(test2, x_col = "r", y_col = "1/log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Band: {BAND} log log space", log_colorbar=True) 
-            #create_region_scatter_plot(test2, x_col = "r", y_col = "log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} log beta space", log_colorbar=True) 
-            #create_region_scatter_plot(test, x_col = "r", y_col = "1/beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Band: {BAND} 1/beta space", log_colorbar=True) 
-            create_region_scatter_plot(test2, x_col = "r", y_col = "1/beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + Layer: {BAND} 1/beta space", log_colorbar=True) 
+            #create_region_scatter_plot(test, x_col = "r", y_col = "eta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} eta space", log_colorbar=True)
+            create_region_scatter_plot(test2, x_col = "r", y_col = "eta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} eta space", log_colorbar=True)
+            #create_region_scatter_plot(test2, x_col = "r", y_col = "beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} eta space", log_colorbar=True)
+            #create_region_scatter_plot(test2, x_col = "log_r", y_col = "log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} log log space", log_colorbar=True)
+            #create_region_scatter_plot(test2, x_col = "r", y_col = "1/log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} log log space", log_colorbar=True) 
+            #create_region_scatter_plot(test2, x_col = "r", y_col = "log_beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} log beta space", log_colorbar=True) 
+            #create_region_scatter_plot(test, x_col = "r", y_col = "1/beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} 1/beta space", log_colorbar=True) 
+            create_region_scatter_plot(test2, x_col = "r", y_col = "1/beta", metric='ksstat', plot_name=f"{plot_name} KS Stats + {kind}: {BAND} 1/beta space", log_colorbar=True) 
 
 
         # Define a rational function: f(r) = (a * r^2 + b * r + c) / (d * r + e)
@@ -806,8 +808,46 @@ def region_reporting(rEtaKsstats_dict, master_df, layer = "all", MULT =1.2, plot
                     
                 plt.xlabel("r")
                 plt.ylabel("1/beta")
-                plt.title(f"{plot_name} Band: {BAND} Fitted Functions")
+                plt.title(f"{plot_name} {kind}: {BAND} Fitted Functions")
                 plt.legend()
                 plt.grid()
                 plt.show()
     return hulls_df
+
+
+
+
+def add_hull(master_df, rEtaKsstats_dict, GROUP):
+
+    
+    master_df_copy = master_df.copy()
+    master_df_copy = master_df.set_index(GROUP)
+    layers = master_df_copy.index
+    master_df_copy["hull"] = ""
+
+    for BAND in layers:
+        if master_df_copy.loc[BAND, "total_samples"] < 10:
+            master_df_copy.loc[BAND, "hull"] = np.nan
+           
+        else:
+            drop_keys =list(rEtaKsstats_dict[BAND].keys())[-3:]
+            print(drop_keys)
+            pre_optimization = pd.DataFrame(rEtaKsstats_dict[BAND]).drop(drop_keys, axis = 1 )
+            optimization = pd.DataFrame(rEtaKsstats_dict[BAND])[drop_keys]
+            optimization = optimization.rename(columns = {"r_optimize": "r", "eta_optimize": "eta", drop_keys[-1]: "ksstat"})
+            optimization = optimization.dropna()
+            full_df = pre_optimization.merge(optimization, on=["r", "eta"], how="outer")
+            full_df = full_df.set_index(["r", "eta"])
+            full_df["ksstat"] = full_df.min(axis=1)
+            full_df = full_df.reset_index()
+            full_df = full_df[["r", "eta", "ksstat"]]
+            full_df["1/beta"] = full_df["r"]/(full_df["eta"] + 1.5)
+            MULT = 1.2
+            cutoff = max(min(full_df["ksstat"]) * MULT, master_df_copy.loc[BAND, "kstest_stat_cutoff_0.05"], 0.01)
+            filtered_df = full_df[full_df["ksstat"] < cutoff]
+            points = np.column_stack((filtered_df["r"], filtered_df["1/beta"])) + stats.norm.rvs(size=(len(filtered_df), 2)) * 0.001  # Adding small noise for convex hull computation
+            hull = ConvexHull(points)
+            master_df_copy.loc[BAND, "hull"] = hull
+    return master_df_copy
+
+   
