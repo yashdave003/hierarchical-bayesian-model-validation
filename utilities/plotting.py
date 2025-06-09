@@ -814,26 +814,23 @@ def region_reporting(rEtaKsstats_dict, master_df, layer = "all", MULT =1.2, kind
                 plt.show()
     return hulls_df
 
+def add_hull(master_df, rEtaKsstats_dict, GROUP='group', debug=False):
 
-
-
-def add_hull(master_df, rEtaKsstats_dict, GROUP):
-
-    
     master_df_copy = master_df.copy()
     master_df_copy = master_df.set_index(GROUP)
-    layers = master_df_copy.index
+    groups = master_df_copy.index
     master_df_copy["hull"] = ""
 
-    for BAND in layers:
-        if master_df_copy.loc[BAND, "total_samples"] < 10:
-            master_df_copy.loc[BAND, "hull"] = np.nan
+    for group in groups:
+        if master_df_copy.loc[group, "total_samples"] < 10:
+            master_df_copy.loc[group, "hull"] = np.nan
            
         else:
-            drop_keys =list(rEtaKsstats_dict[BAND].keys())[-3:]
-            print(drop_keys)
-            pre_optimization = pd.DataFrame(rEtaKsstats_dict[BAND]).drop(drop_keys, axis = 1 )
-            optimization = pd.DataFrame(rEtaKsstats_dict[BAND])[drop_keys]
+            drop_keys =list(rEtaKsstats_dict[group].keys())[-3:]
+            if debug:
+                print(drop_keys)
+            pre_optimization = pd.DataFrame(rEtaKsstats_dict[group]).drop(drop_keys, axis = 1 )
+            optimization = pd.DataFrame(rEtaKsstats_dict[group])[drop_keys]
             optimization = optimization.rename(columns = {"r_optimize": "r", "eta_optimize": "eta", drop_keys[-1]: "ksstat"})
             optimization = optimization.dropna()
             full_df = pre_optimization.merge(optimization, on=["r", "eta"], how="outer")
@@ -843,11 +840,12 @@ def add_hull(master_df, rEtaKsstats_dict, GROUP):
             full_df = full_df[["r", "eta", "ksstat"]]
             full_df["1/beta"] = full_df["r"]/(full_df["eta"] + 1.5)
             MULT = 1.2
-            cutoff = max(min(full_df["ksstat"]) * MULT, master_df_copy.loc[BAND, "kstest_stat_cutoff_0.05"], 0.01)
+            cutoff = max(min(full_df["ksstat"]) * MULT, master_df_copy.loc[group, "kstest_stat_cutoff_0.05"], 0.01)
             filtered_df = full_df[full_df["ksstat"] < cutoff]
             points = np.column_stack((filtered_df["r"], filtered_df["1/beta"])) + stats.norm.rvs(size=(len(filtered_df), 2)) * 0.001  # Adding small noise for convex hull computation
             hull = ConvexHull(points)
-            master_df_copy.loc[BAND, "hull"] = hull
-    return master_df_copy
+            master_df_copy.loc[group, "hull"] = hull
+
+    return master_df_copy.reset_index()
 
    
