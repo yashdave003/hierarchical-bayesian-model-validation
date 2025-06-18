@@ -513,6 +513,9 @@ def find_n_fixed_pval_stat(ksstat: float, n: int, cutoff=0.05):
         if np.isnan(curr_pval):
             print(f"Cannot compute pval with ksstat : {ksstat}, n : {n}")
             return -1
+        if ksstat > 0.2:
+            print("Not a fit")
+            return -1
         if curr_pval < cutoff:
             n = int(n / 2)
             curr_pval = scipy.stats.kstwo(n).sf(ksstat)
