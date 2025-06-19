@@ -110,10 +110,10 @@ agriVision,wavelet,7,0.2490272373540856
 agriVision,wavelet,8,0.3320363164721141
 agriVision,wavelet,9,0.4980544747081712
 agriVision,wavelet,10,0.9961089494163424
-segmentAnything,wavelet,2,0.1106787721573713
+segmentAnything,wavelet,2,0.11067877215737137
 segmentAnything,wavelet,3,0.1245136186770428
 segmentAnything,wavelet,4,0.1423012784880489
-segmentAnything,wavelet,5,0.166018158236057
+segmentAnything,wavelet,5,0.16601815823605706
 segmentAnything,wavelet,6,0.1992217898832685
 segmentAnything,wavelet,7,0.2490272373540856
 segmentAnything,wavelet,8,0.3320363164721141
@@ -173,7 +173,7 @@ syntheticMRI2D,wavelet,8,0.4980544747081712
 syntheticMRI2D,wavelet,9,0.9961089494163424
 coco-outdoor,wavelet,2,0.1245136186770428
 coco-outdoor,wavelet,3,0.1423012784880489
-coco-outdoor,wavelet,4,0.16601815823605706
+coco-outdoor,wavelet,4,0.166018158236057
 coco-outdoor,wavelet,5,0.1992217898832685
 coco-outdoor,wavelet,6,0.2490272373540856
 coco-outdoor,wavelet,7,0.3320363164721141
