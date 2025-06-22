@@ -53,37 +53,53 @@ def apply_learned_filters(image, filters, device='cpu'):
     filter_tensor = torch.tensor(filters, dtype=torch.float32).to(device)
     
     # Convolve the image with all filters.
-    feature_maps = F.conv2d(image_tensor, filter_tensor, bias=None, stride=1, padding=first_conv.padding)
+    feature_maps = F.conv2d(image_tensor, filter_tensor, bias=None, stride=1, padding='same')
     
     # feature_maps shape: [1, num_filters, H_out, W_out]
     return feature_maps.squeeze(0).cpu().detach().numpy()  # shape: (num_filters, H_out, W_out)
-
 def apply_learned_filters_batch(images, filters, device='cpu'):
+    """
+    images: NumPy array of shape (N, H, W, 3) or list of images in HWC format, dtype float32 or uint8.
+    filters: NumPy array of shape (num_filters, in_channels, kH, kW).
+    Returns: list of feature maps for each image.
+    """
+    # Ensure images are float32
+    images = [img.astype(np.float32) for img in images]
+    feature_maps_list = []
+    for img in tqdm(images, desc="Applying filters"):
+        fmap = apply_learned_filters(img, filters, device=device)
+        feature_maps_list.append(fmap)
+    feature_maps = np.stack(feature_maps_list)  # shape: (N, num_filters, H_out, W_out)
+
+    return feature_maps  # shape: (N, num_filters, H_out, W_out)
+
+def apply_learned_filters_batch_at_once(images, filters, device='cpu'):
     """
     images: NumPy array of shape (N, H, W, 3) or list of images in HWC format, dtype float32 or uint8.
     filters: NumPy array of shape (num_filters, in_channels, kH, kW).
     Returns: torch tensor of shape (N, num_filters, H_out, W_out)
     """
-    # Convert to torch tensor: shape (N, C, H, W)
+    # Ensure images are float32
+    images = [img.astype(np.float32) for img in images]
     images = torch.stack([transforms.ToTensor()(img) for img in images])  # (N, 3, H, W)
     images = images.to(device)
 
     # Convert filters to tensor
-    filter_tensor = torch.tensor(filters, dtype=torch.float64).to(device)
+    filter_tensor = torch.tensor(filters, dtype=torch.float32).to(device)
 
     # Run batch convolution (groups=1, so apply all filters to each image)
-    feature_maps = F.conv2d(images, filter_tensor, bias=None, stride=1, padding='same')  # or customize padding
+    feature_maps = F.conv2d(images, filter_tensor, bias=None, stride=1, padding='same')
 
-    return feature_maps.cpu().detach()  # shape: (N, num_filters, H_out, W_out)
+    return feature_maps.cpu().detach()
 
 
 def load_images_from_directory(directory, n=None, jitter=False, normalize=False):
 
     all_images = os.listdir(directory)
     num_images = len(all_images)
-    n=100
-    jitter=True
-    normalize=True
+    #n=100
+    #jitter=True
+    #normalize=True
 
     if not n:
         n = num_images
@@ -91,7 +107,7 @@ def load_images_from_directory(directory, n=None, jitter=False, normalize=False)
     images = []
     subset = np.random.permutation(num_images)[:n]
     
-    for i in subset:
+    for i in tqdm(subset, desc="Loading images"):
         filename = all_images[i]
         if filename.endswith(".npz"):
             img = np.load(os.path.join(directory, filename))["image"].astype(np.float64)
@@ -116,10 +132,11 @@ def transform_images(images, filters, device='cpu'):
 
     # Flatten per-filter results across all images
     num_filters = feature_maps.shape[1]
-    feature_maps = feature_maps.permute(1, 0, 2, 3)  # (num_filters, N, H_out, W_out)
+    print(f"Feature maps shape: {feature_maps.shape}")  # (N, num_filters, H_out, W_out)
+    feature_maps = np.transpose(feature_maps, (1, 0, 2, 3))  # (num_filters, N, H_out, W_out)
     flattened = feature_maps.reshape(num_filters, -1)  # Each row: all outputs of one filter
 
-    return flattened.numpy()  # shape: (num_filters, total_pixels_across_all_images)
+    return flattened  # shape: (num_filters, total_pixels_across_all_images)
 
 def bootstrap_skew(data, n_bootstrap=10000, sample_size=20000):
     # From each filter distribution of around 600k coefficients, take a random sample of sample_size, and then bootstrap n_bootsrap times
