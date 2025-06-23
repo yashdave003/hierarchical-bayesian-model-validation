@@ -53,3 +53,15 @@ def load_images_from_directory(directory, n=None, jitter=False, normalize=False)
         images.append(img)
 
     return np.array(images)
+
+def bootstrap_metric(x, metric=None, n_bootstrap=1000, bootstrap_size = 10000, ci=0.99, replace=True):
+    metric_values = []
+    for _ in tqdm(range(n_bootstrap)):
+        resampled = np.random.choice(x, size=bootstrap_size, replace=replace)
+        metric_values.append(metric(resampled))
+        
+    metric_point_estimate = metric(x)
+    ci_lower = np.percentile(metric_values, (1 - ci) / 2 * 100)
+    ci_upper = np.percentile(metric_values, (1 + ci) / 2 * 100)
+    
+    return metric_point_estimate, ci_lower, ci_upper, metric_values
