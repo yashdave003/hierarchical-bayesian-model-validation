@@ -2,10 +2,6 @@ import git
 from pathlib import Path
 import os
 
-import torch
-import torchvision
-import torchvision.transforms as transforms
-import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,11 +18,19 @@ warnings.filterwarnings("ignore")
 np.set_printoptions(legacy='1.25')
 np.random.seed(0)
 
-alexnet = torchvision.models.alexnet(pretrained=True)
-alexnet.eval()  
+ROOT_DIR = Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 
-first_conv = alexnet.features[0]
-filters = first_conv.weight.data.clone().cpu().numpy().transpose(0, 2, 3, 1)  # shape: [out_channels, in_channels, height, width]
+# import torch
+# import torchvision
+# import torchvision.transforms as transforms
+# import torch.nn.functional as F
+
+# alexnet = torchvision.models.alexnet(pretrained=True)
+# alexnet.eval()  
+# first_conv = alexnet.features[0]
+# filters = first_conv.weight.data.clone().cpu().numpy().transpose(0, 2, 3, 1)  # shape: [out_channels, in_channels, height, width]
+
+filters = pd.read_pickle(os.path.join(ROOT_DIR, 'learned-filters', 'filters.pickle'))
 
 def load_images_from_directory(directory, n=None, jitter=False, normalize=False):
 
