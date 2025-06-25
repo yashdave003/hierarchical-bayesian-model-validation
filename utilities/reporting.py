@@ -73,7 +73,10 @@ def add_hull(master_df, rEtaKsstats_dict, GROUP='group', debug=False):
             cutoff = max(min(full_df["ksstat"]) * MULT, master_df_copy.loc[group, "kstest_stat_cutoff_0.05"], 0.01)
             filtered_df = full_df[full_df["ksstat"] < cutoff]
             points = np.column_stack((filtered_df["r"], filtered_df["1/beta"])) + stats.norm.rvs(size=(len(filtered_df), 2)) * 0.001  # Adding small noise for convex hull computation
-            hull = ConvexHull(points)
+            if len(points) < 3:
+                hull=np.nan
+            else:
+                hull = ConvexHull(points)
             master_df_copy.loc[group, "hull"] = hull
 
     return master_df_copy.reset_index()
@@ -108,7 +111,7 @@ for path in all_paths:
         master_df['subset'] = slice
         master_df['channel'] = np.nan
         master_df['orientation'] = orientation
-        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, slice, transform, orientation, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, slice, transform, orientation, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
     elif len(parts) > 6:
         dataset, subset, transform, orientation, channel, _, _ = parts
         master_df['dataset'] = dataset
@@ -116,7 +119,7 @@ for path in all_paths:
         master_df['subset'] = subset
         master_df['channel'] = channel
         master_df['orientation'] = orientation
-        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, subset, transform, orientation, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, subset, transform, orientation, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
     elif "learned" in path:
         dataset, subset, transform, _, _ = parts
         master_df['dataset'] = dataset
@@ -124,7 +127,7 @@ for path in all_paths:
         master_df['subset'] = subset
         master_df = master_df.rename(columns={'filter_group' : 'orientation'})
         master_df['channel'] = np.nan
-        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, subset, transform, orientation, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, subset, transform, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
 
     else:
         dataset, size, transform, channel, _, _ = parts
@@ -133,7 +136,7 @@ for path in all_paths:
         master_df['subset'] = size
         master_df['channel'] = channel
         master_df['orientation'] = np.nan
-        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, size, transform, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, size, transform, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
     
     if dataset in ['pastis', 'agriVision', 'spaceNet']:
         master_df['dataset_type'] = 'remote sensing'
@@ -145,7 +148,6 @@ for path in all_paths:
 
     GROUP = 'layer' if transform.split("-")[0] == 'wavelet' else ('band' if transform.split("-")[0] == 'fourier' else 'filter_idx')
     rEtaKsstatsDict = pd.read_pickle(path[:-18] + "cache" + os.sep + "rEtaKsstats_dict.pickle")
- 
     master_df = add_hull(master_df, rEtaKsstatsDict)
     all_master_dfs.append(master_df[relevant_cols])
     
