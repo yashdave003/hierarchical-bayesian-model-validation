@@ -81,6 +81,8 @@ def add_hull(master_df, rEtaKsstats_dict, GROUP='group', debug=False):
 
     return master_df_copy.reset_index()
 
+
+
 relevant_cols = [
         'group', 'obs_var', 'var_lower', 'var_upper', 'obs_kurt', 'kurt_lower', 'kurt_upper', 
         'total_samples', 'initial_r', 'initial_eta', 'kstest_stat_initial', 'kstest_stat_cutoff_0.05',
@@ -127,7 +129,7 @@ for path in all_paths:
         master_df['subset'] = subset
         master_df = master_df.rename(columns={'filter_group' : 'orientation'})
         master_df['channel'] = np.nan
-        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, subset, transform, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, subset, transform, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
 
     else:
         dataset, size, transform, channel, _, _ = parts
@@ -179,3 +181,4 @@ save_cols = ['total_samples', 'dataset', 'subset', 'transform', 'orientation', '
 new_fail_cat_df_path = os.path.join(ROOT_DIR, "publication", "paper", "CSVs", 'new_fail_cat_df.csv')
 main_df[save_cols].to_csv(new_fail_cat_df_path)
 main_df = main_df.reset_index(drop=True)
+
