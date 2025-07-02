@@ -97,7 +97,7 @@ all_master_dfs = []
 github_plots_path = "https://github.com/yashdave003/hierarchical-bayesian-model-validation/blob/main/results/case-studies/"
 
 for path in all_paths:
-    if 'scaleTesting' in path or 'standardTesting' in path:
+    if 'scaleTesting' in path or 'standardTesting' in path: #
         continue
     master_df = pd.read_csv(path)
     master_df = master_df.rename(columns={master_df.columns[0]: 'group'})
@@ -146,6 +146,8 @@ for path in all_paths:
         master_df['dataset_type'] = 'medical'
     elif dataset in ['coco', 'segmentAnything']:
         master_df['dataset_type'] = 'natural'
+    elif dataset in ['standardTesting']:
+        master_df['dataset_type'] = 'classical'
 
 
     GROUP = 'layer' if transform.split("-")[0] == 'wavelet' else ('band' if transform.split("-")[0] == 'fourier' else 'filter_idx')
