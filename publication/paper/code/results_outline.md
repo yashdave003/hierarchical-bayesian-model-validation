@@ -6,9 +6,10 @@
 
 <img src="../draft_plots/compare_priors_schematic_final.jpg" width="600">
 
-<img src="../draft_plots/prior_log_cauchy.jpg" width="300"> <img src="../draft_plots/prior_log_laplace.jpg" width="300"> <img src="../draft_plots/prior_log_r0.2_eta2.jpg" width="600">
+<img src="../draft_plots/prior_log_cauchy.jpg" width="300"> <img src="../draft_plots/prior_log_laplace.jpg" width="300"> 
 <img src="../draft_plots/prior_log_r1_eta-1.jpg" width="600">
 <img src="../draft_plots/prior_log_r1_eta2.jpg" width="600">
+<img src="../draft_plots/prior_log_r0.2_eta2.jpg" width="600">
 <img src="../draft_plots/prior_log_r5_eta5.jpg" width="600">
 
 ## 3.3 Motivation
@@ -25,6 +26,8 @@
 
 <img src="../draft_plots/remote_best_r_eta_beta_panel_plot.jpg" width="600">
 
+<img src="../draft_plots/learned_remote_sensing_ksstats_panel.jpg" width="600">
+
 <img src="../draft_plots/Region Reporting for pastis - Fourier Transform.jpg" width="200"> <img src="../draft_plots/Region Reporting for pastis - Wavelet Transform Zoomed.jpg" width="370">
 
 ## 6.2 Medical (MRI)
@@ -40,9 +43,11 @@
 ## 6.3 Natural
 
 ### Natural ImageSet KS Statistics  
-<img src="../draft_plots/natural_imageset_ksstats.jpg" width="600">
+<img src="../draft_plots/natural_images_ksstats.jpg" width="600">
 
 <img src="../draft_plots/natural_best_r_eta_beta_panel_plot.jpg" width="600">
+
+<img src="../draft_plots/learned_natural_ksstats_panel.jpg" width="600">
 
 ## 6.4 Combined
 
