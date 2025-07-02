@@ -113,7 +113,7 @@ for path in all_paths:
         master_df['subset'] = slice
         master_df['channel'] = np.nan
         master_df['orientation'] = orientation
-        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, slice, transform, orientation, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, slice, transform, orientation, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
     elif len(parts) > 6:
         dataset, subset, transform, orientation, channel, _, _ = parts
         master_df['dataset'] = dataset
@@ -121,7 +121,7 @@ for path in all_paths:
         master_df['subset'] = subset
         master_df['channel'] = channel
         master_df['orientation'] = orientation
-        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, subset, transform, orientation, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, subset, transform, orientation, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
     elif "learned" in path:
         dataset, subset, transform, _, _ = parts
         master_df['dataset'] = dataset
@@ -129,7 +129,7 @@ for path in all_paths:
         master_df['subset'] = subset
         master_df = master_df.rename(columns={'filter_group' : 'orientation'})
         master_df['channel'] = np.nan
-        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, subset, transform, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, subset, transform, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
 
     else:
         dataset, size, transform, channel, _, _ = parts
@@ -138,7 +138,7 @@ for path in all_paths:
         master_df['subset'] = size
         master_df['channel'] = channel
         master_df['orientation'] = np.nan
-        master_df['github_plot'] = [github_plots_path+f'{os.sep}'.join([dataset, size, transform, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
+        master_df['github_plot'] = [github_plots_path+'/'.join([dataset, size, transform, channel, 'plots', f'compare_cdf_pdf_layer_{group}.jpg']) for group in master_df['group']]
     
     if dataset in ['pastis', 'agriVision', 'spaceNet']:
         master_df['dataset_type'] = 'remote sensing'

@@ -1,3 +1,20 @@
+# 3 Introduction and Background
+
+## 3.1 Background
+
+## 3.2 The Prior Model
+
+<img src="../draft_plots/compare_priors_schematic_final.jpg" width="600">
+
+<img src="../draft_plots/prior_log_cauchy.jpg" width="300"> <img src="../draft_plots/prior_log_laplace.jpg" width="300"> <img src="../draft_plots/prior_log_r0.2_eta2.jpg" width="600">
+<img src="../draft_plots/prior_log_r1_eta-1.jpg" width="600">
+<img src="../draft_plots/prior_log_r1_eta2.jpg" width="600">
+<img src="../draft_plots/prior_log_r5_eta5.jpg" width="600">
+
+## 3.3 Motivation
+
+## 3.4 Outline
+
 # 6 Results
 
 ## 6.1 Remote
