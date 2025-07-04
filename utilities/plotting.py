@@ -849,3 +849,97 @@ def add_hull(master_df, rEtaKsstats_dict, GROUP='group', debug=False):
     return master_df_copy.reset_index()
 
    
+
+
+def plot_pdf_components(r, eta, scale, components = 10, mode = "equal", color_fn = None, custom_var = None, varlim = None, xlim = None, lin_lim = None, log_lim = None, debug = True, prior_pdf = None, title = None, edgecolor = 'black'):
+    beta = (eta + 1.5) / r
+    
+    if mode == "equal":
+        x = np.linspace(0, 1, components+2)[1:-1][::-1]  # Exclude 0 and 1 to avoid singularities
+        vars = stats.gengamma(a=beta, c=r, scale=scale).ppf(x)
+        weights = np.ones(components) / components
+    elif mode == "variance":
+        if custom_var is None and varlim is None:
+            raise ValueError("Either custom_var or varlim must be provided for 'variance' mode.")
+        if custom_var is not None:
+            vars = np.array(custom_var)
+        elif varlim is not None:
+            if varlim[2] == "linear":
+                vars = np.linspace(varlim[0], varlim[1], components)[::-1]
+            elif varlim[2] == "log":
+                vars = np.logspace(np.log10(varlim[0]), np.log10(varlim[1]), components)[::-1]
+        weights = stats.gengamma(a = beta, c = r, scale=scale).cdf(vars[::-1])
+        weights = np.diff(weights, prepend=0)[::-1]
+        print(sum(weights))  # Convert cumulative weights to densities
+        print(weights)
+          
+
+        
+    
+    if prior_pdf is None:
+        xs, genGamma_prior = compute_prior_pdf(r=r, eta=eta, scale=scale, n_samples=2000, debug=debug)
+    else:
+        xs = np.linspace(-5, 5, 1000)
+        genGamma_prior = prior_pdf
+
+    means = np.zeros(components)
+    print(vars)
+    norm_pdfs = np.array([stats.norm.pdf(xs, loc=mean, scale=np.sqrt(var)) for mean, var in zip(means, vars)])
+    if color_fn is None:
+        cmap = plt.cm.viridis(np.linspace(0, 1, components))
+    else:
+        cmap = [color_fn(var) for var in vars]  # Create a colormap based on the variances
+
+    # Create side-by-side subplots
+    fig, axs = plt.subplots(1, 2, figsize=(14, 5), sharex=True, constrained_layout=True)
+
+    for ax, yscale in zip(axs, ['linear', 'log']):
+    # Plot stackplot
+        ax.stackplot(
+            xs,
+            *(norm_pdfs * weights[:, None]),
+            colors=cmap,
+            labels=[f'Component {i+1} (var={vars[i]:.2f}), (wt={weights[i]:.2f})' for i in range(components)]
+        )
+        # Overlay the GenGamma prior
+        ax.plot(xs, genGamma_prior(xs), label='GenGamma Prior', color='black', linestyle='--', linewidth=2)
+
+        # Set styles
+        for polygon in ax.collections:
+            polygon.set_edgecolor(edgecolor)
+        ax.set_xlabel('x')
+        ax.set_ylabel('Density')
+
+        ax.set_yscale(yscale)
+
+
+    # Shared title and colorbar
+    if xlim is not None:
+        axs[0].set_xlim(xlim)
+        axs[1].set_xlim(xlim)
+    if lin_lim is not None:
+        axs[0].set_ylim(lin_lim)
+    if log_lim is not None:
+        axs[1].set_ylim(log_lim)
+
+    if title is None:
+        title = f'Scale Mixture of Normals with GenGamma Prior\nr={r}, eta={eta}, scale={scale}, components={components}'
+    fig.suptitle(title, fontsize=14)
+
+
+    # Add colorbar outside the plots
+    #sm = plt.cm.ScalarMappable(
+        #cmap=plt.cm.viridis_r,  # reversed colormap
+        #norm=colors.Normalize(vmin=vars.min(), vmax=vars.max())
+    #)  
+    #sm.set_array([])
+    #cbar = fig.colorbar(sm, ax=axs.ravel().tolist(), location='right', pad=0.02, aspect=40)
+    #cbar.set_label('Variance')
+
+    # Only show legend for the first axis, outside the plot
+    handles, labels = axs[0].get_legend_handles_labels()
+    # Remove duplicate labels (e.g., GenGamma Prior)
+    unique = dict(zip(labels, handles))
+    #fig.legend(unique.values(), unique.keys(), loc='center left', bbox_to_anchor=(1.02, 0.5), fontsize=10, borderaxespad=0.)
+    
+    
