@@ -941,5 +941,5 @@ def plot_pdf_components(r, eta, scale, components = 10, mode = "equal", color_fn
     # Remove duplicate labels (e.g., GenGamma Prior)
     unique = dict(zip(labels, handles))
     #fig.legend(unique.values(), unique.keys(), loc='center left', bbox_to_anchor=(1.02, 0.5), fontsize=10, borderaxespad=0.)
-    
+    return fig
     
