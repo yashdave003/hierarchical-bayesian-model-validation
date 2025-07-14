@@ -2,7 +2,6 @@ import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import pywt
-import os
 
 
 USE_MATLAB = True # required for Erblet transforms
@@ -31,14 +30,9 @@ def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=8000, num_
 
     if visualize:
         plt.figure(figsize=(10, 6))
-        plt.imshow(
-            np.abs(coefs),
-            aspect='auto',
-            cmap='jet',
-            extent=[0, len(signal)/rate, low_freq, high_freq]
-        )
+        plt.pcolormesh(np.arange(len(signal)) / rate, freqs, np.abs(coefs), cmap='jet', shading='auto')
         plt.colorbar(label='Magnitude')
-        # plt.yscale('log')
+        plt.yscale('log')
         plt.ylabel('Frequency (Hz)')
         plt.xlabel('Time (s)')
         plt.title(title)
