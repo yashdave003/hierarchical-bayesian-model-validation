@@ -16,6 +16,7 @@ import scipy
 from scipy import stats
 from scipy.spatial import ConvexHull
 import pylustrator
+from scipy.spatial import Delaunay
 
 ROOT_DIR = Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 
@@ -70,7 +71,7 @@ def add_hull(master_df, rEtaKsstats_dict, GROUP='group', debug=False):
             full_df = full_df[["r", "eta", "ksstat"]]
             full_df["1/beta"] = full_df["r"]/(full_df["eta"] + 1.5)
             MULT = 1.2
-            cutoff = max(min(full_df["ksstat"]) * MULT, master_df_copy.loc[group, "kstest_stat_cutoff_0.05"], 0.01)
+            cutoff = max(min(full_df["ksstat"]) * MULT, 0.01)
             filtered_df = full_df[full_df["ksstat"] < cutoff]
             points = np.column_stack((filtered_df["r"], filtered_df["1/beta"])) + stats.norm.rvs(size=(len(filtered_df), 2)) * 0.001  # Adding small noise for convex hull computation
             if len(points) < 3:
