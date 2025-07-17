@@ -2,6 +2,7 @@ import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import pywt
+import librosa
 
 
 USE_MATLAB = True # required for Erblet transforms
@@ -35,6 +36,20 @@ def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=8000, num_
         plt.yscale('log')
         plt.ylabel('Frequency (Hz)')
         plt.xlabel('Time (s)')
+        plt.title(title)
+        plt.show()
+
+    return coefs, freqs
+
+def stft_file(file_path, n_fft=1024, visualize=False, title='Log-Frequency Spectrogram (STFT Magnitude)'):
+    signal, rate = librosa.load(file_path, sr=None)
+    coefs = librosa.stft(signal, n_fft=n_fft)
+    freqs = librosa.fft_frequencies(sr=rate, n_fft=n_fft)
+
+    if visualize:
+        coefs_db = librosa.amplitude_to_db(np.abs(coefs), ref=np.max)
+        librosa.display.specshow(coefs_db, y_axis='log', x_axis='time', sr=rate, n_fft=n_fft)
+        plt.colorbar(format="%+2.f dB")
         plt.title(title)
         plt.show()
 
