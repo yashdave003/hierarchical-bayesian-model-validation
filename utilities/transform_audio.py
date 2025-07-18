@@ -12,11 +12,11 @@ if USE_MATLAB:
 else:
     eng = None
 
-def erblet_demo(file_path):
+def erblet_file(file_path, visualize=False):
     if not USE_MATLAB:
         raise NotImplementedError('MATLAB is required to perform Erblet transforms')
     
-    c, fc = eng.erblet_demo(file_path, nargout=2)
+    c, fc = eng.erblet_demo(file_path, visualize, nargout=2)
     coefs = np.array([np.array(ci)[:, 0] for ci in c], dtype=object)
     freqs = np.array(fc)[:, 0]
 
