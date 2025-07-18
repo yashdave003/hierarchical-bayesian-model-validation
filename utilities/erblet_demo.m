@@ -1,4 +1,4 @@
-function [c, fc] = erblet_demo(path)
+function [c, fc] = erblet_demo(path, visualize)
     [f, fs] = audioread(path);
     [g, a, fc] = audfilters(fs, length(f), 'fractional');
     c = filterbank(f, {'realdual', g}, a);
@@ -9,9 +9,11 @@ function [c, fc] = erblet_demo(path)
         warning('Reconstruction error greater than 1e-10.\nError: %f', err)
     end
 
-    figure;
-    plotfilterbank(c, a, fc, fs, 60, 'audtick');
-    colorbar;
-    title('ERBlet Filterbank Spectrogram');
-    xlabel('Time (Sec)');
-    ylabel('Center Frequency (Hz)'); 
+    if visualize
+        figure;
+        plotfilterbank(c, a, fc, fs, 60, 'audtick');
+        colorbar;
+        title('ERBlet Filterbank Spectrogram');
+        xlabel('Time (Sec)');
+        ylabel('Center Frequency (Hz)'); 
+    end
