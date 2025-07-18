@@ -17,7 +17,7 @@ def erblet_demo(file_path):
         raise NotImplementedError('MATLAB is required to perform Erblet transforms')
     
     c, fc = eng.erblet_demo(file_path, nargout=2)
-    coefs = [np.array(ci)[:, 0] for ci in c]
+    coefs = np.array([np.array(ci)[:, 0] for ci in c], dtype=object)
     freqs = np.array(fc)[:, 0]
 
     return coefs, freqs
