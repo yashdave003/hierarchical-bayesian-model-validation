@@ -1,4 +1,4 @@
-function [c, fc] = erblet_demo(path, visualize)
+function [c, fc] = erblet(path, visualize)
     [f, fs] = audioread(path);
     [g, a, fc] = audfilters(fs, length(f), 'fractional');
     c = filterbank(f, {'realdual', g}, a);
