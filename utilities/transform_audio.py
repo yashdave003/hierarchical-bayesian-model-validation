@@ -10,6 +10,11 @@ USE_MATLAB = True # required for Erblet transforms
 if USE_MATLAB:
     import matlab.engine 
     eng = matlab.engine.start_matlab()
+    # use utilities/ltfat_path.txt to store path to local installation (under .gitignore)
+    # may want to use a .env file in the future if more environment variables are required
+    with open('ltfat_path.txt') as f:
+        eng.addpath(f.read())
+    eng.ltfatstart(nargout=0)
 else:
     eng = None
 
@@ -79,9 +84,9 @@ def fft_file(file_path, n=None, discard_negative=True, visualize=False, title='F
     return coefs, freqs
 fft_file.affix = 'fft'
 
-def transform_list(transform_file, file_list, file_names, *args, progress=True, affix=None, **kwargs):
+def transform_list(transform_file, file_list, file_names, *args, progress_bar=True, affix=None, **kwargs):
     first_freqs = None
-    def check_freq(transform):
+    def check_freqs(transform):
         nonlocal first_freqs
         coefs, freqs = transform
         if first_freqs is None:
@@ -94,8 +99,8 @@ def transform_list(transform_file, file_list, file_names, *args, progress=True, 
         affix = getattr(transform_file, 'affix', 'xform')
     transformed_names = [name.rsplit('.', 1)[0] + '_' + affix for name in file_names]
 
-    coefs_gen = (check_freq(transform_file(f, *args, **kwargs)) for f in file_list)
-    if progress:
+    coefs_gen = (check_freqs(transform_file(file_path, *args, **kwargs)) for file_path in file_list)
+    if progress_bar:
         coefs_gen = tqdm(coefs_gen, total=len(file_list))
 
     np.savez(affix + '_coefs', **dict(zip(transformed_names, coefs_gen)))

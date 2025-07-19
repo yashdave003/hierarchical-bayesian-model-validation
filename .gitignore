@@ -3,6 +3,7 @@ raw-data/
 extraCDFs/
 **/.DS_Store
 utilities/__pycache__/
+utilities/ltfat_path.txt
 transformed-data/old/
 results/case-studies/scheduler.ipynb
 results/case-studies/scheduler_brandon.ipynb
