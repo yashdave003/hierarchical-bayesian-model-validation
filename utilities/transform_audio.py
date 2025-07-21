@@ -18,11 +18,11 @@ if USE_MATLAB:
 else:
     eng = None
 
-def erblet_file(file_path, visualize=False):
+def erblet_file(file_path, verify_reconstruction=False, visualize=False):
     if not USE_MATLAB:
         raise NotImplementedError('MATLAB is required to perform Erblet transforms')
     
-    c, fc = eng.erblet(file_path, visualize, nargout=2)
+    c, fc = eng.erblet(file_path, verify_reconstruction, visualize, nargout=2)
     coefs = np.array([np.array(ci)[:, 0] for ci in c], dtype=object)
     freqs = np.array(fc)[:, 0]
 
@@ -38,7 +38,7 @@ def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=8000, num_
 
     if visualize:
         plt.figure(figsize=(10, 6))
-        plt.pcolormesh(np.arange(len(signal)) / rate, freqs, np.abs(coefs), cmap='jet', shading='auto')
+        plt.pcolormesh(np.arange(len(signal)) / rate, freqs, np.abs(coefs), norm='log', cmap='inferno', vmin=100)
         plt.colorbar(label='Magnitude')
         plt.yscale('log')
         plt.ylabel('Frequency (Hz)')
