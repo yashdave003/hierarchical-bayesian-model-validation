@@ -3,6 +3,9 @@ from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import pywt
 import librosa
+import zipfile
+import io
+import shutil
 from tqdm.notebook import tqdm
 
 
@@ -29,12 +32,12 @@ def erblet_file(file_path, verify_reconstruction=False, visualize=False):
     return coefs, freqs
 erblet_file.affix = 'erb'
 
-def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=8000, num_scales=100, 
+def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=20000, num_scales=100, 
              visualize=False, title='CWT with Morlet Wavelet'):
     rate, signal = wavfile.read(file_path)
     frequencies = np.logspace(np.log10(low_freq), np.log10(high_freq), num_scales)
     scales = pywt.frequency2scale(wavelet, frequencies / rate)
-    coefs, freqs = pywt.cwt(signal, scales, wavelet, 1/rate)
+    coefs, freqs = pywt.cwt(signal.astype('float32'), scales, wavelet, 1/rate)
 
     if visualize:
         plt.figure(figsize=(10, 6))
@@ -84,7 +87,8 @@ def fft_file(file_path, n=None, discard_negative=True, visualize=False, title='F
     return coefs, freqs
 fft_file.affix = 'fft'
 
-def transform_list(transform_file, file_list, file_names, *args, progress_bar=True, affix=None, **kwargs):
+def transform_list(transform_file, file_list, file_names, *args, 
+                   progress_bar=True, affix=None, compress=False, **kwargs):
     first_freqs = None
     def check_freqs(transform):
         nonlocal first_freqs
@@ -97,11 +101,20 @@ def transform_list(transform_file, file_list, file_names, *args, progress_bar=Tr
     
     if affix is None:
         affix = getattr(transform_file, 'affix', 'xform')
-    transformed_names = [name.rsplit('.', 1)[0] + '_' + affix for name in file_names]
 
+    filenames_out = (f"{name.rsplit('.', 1)[0]}_{affix}.npy" for name in file_names)
     coefs_gen = (check_freqs(transform_file(file_path, *args, **kwargs)) for file_path in file_list)
+    pairs_gen = zip(filenames_out, coefs_gen)
     if progress_bar:
-        coefs_gen = tqdm(coefs_gen, total=len(file_list))
+        pairs_gen = tqdm(pairs_gen, 'Computing and exporting coefficients', total=len(file_list))
 
-    np.savez(affix + '_coefs', **dict(zip(transformed_names, coefs_gen)))
+    zip_compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+    with zipfile.ZipFile(affix + '_coefs.npz', 'w', zip_compression) as zipf:
+        for filename, coefs in pairs_gen:
+            buffer = io.BytesIO()
+            np.save(buffer, coefs)
+            buffer.seek(0)
+            with zipf.open(filename, 'w', force_zip64=True) as zipf_entry:
+                shutil.copyfileobj(buffer, zipf_entry)
+
     np.save(affix + '_freqs', first_freqs)
