@@ -163,7 +163,7 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
         max_depth: threshold limit for number of cuts
 
     Returns:
-        coef_list modified if more cuts have been made 
+        coef_list modified if more cuts have been made, indeces may be tuples if frequences banded together
         number of cuts made (for recrusive purposes )
     """
    if max_depth and cuts >= max_depth: 
