@@ -120,6 +120,7 @@ def transform_list(transform_file, file_list, file_names, *args,
     np.savez(affix + '_coefs', **dict(zip(transformed_names, coefs_gen)))
     np.save(affix + '_freqs', first_freqs)
 
+
 def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_basis=None, ks_threshold=.05, max_depth=None, macro_processing=True): 
     
     def converge_freq(glossary_df): 
@@ -174,7 +175,7 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
         max_depth: threshold limit for number of cuts
 
     Returns:
-        coef_list modified if more cuts have been made, indeces may be tuples if frequences banded together
+        coef_list modified if more cuts have been made, indeces may be tuples if frequences are banded together
         number of cuts made (for recrusive purposes )
     """
    if max_depth and cuts >= max_depth: 
