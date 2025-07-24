@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import pywt
 import librosa
 from scipy import stats
+import zipfile
+import io
+import shutil
 from tqdm.notebook import tqdm
 
 
@@ -117,7 +120,6 @@ def transform_list(transform_file, file_list, file_names, *args,
             with zipf.open(filename, 'w', force_zip64=True) as zipf_entry:
                 shutil.copyfileobj(buffer, zipf_entry)
 
-    np.savez(affix + '_coefs', **dict(zip(transformed_names, coefs_gen)))
     np.save(affix + '_freqs', first_freqs)
 
 
