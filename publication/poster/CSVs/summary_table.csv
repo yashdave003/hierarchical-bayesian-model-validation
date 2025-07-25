@@ -1,0 +1,16 @@
+dataset_type,dataset,transform,actually_pass,practically_pass,intersect_roi
+medical,syntheticMRI2D,wavelet,2.8,66.7,47.2
+medical,syntheticMRI3D,wavelet,6.1,53.1,57.1
+natural,coco,learned,0.0,57.9,33.3
+natural,coco,wavelet,25.0,26.6,27.1
+natural,segmentAnything,learned,0.0,73.4,50.0
+natural,segmentAnything,wavelet,25.0,60.2,36.1
+remote sensing,agriVision,fourier,2.3,93.2,70.5
+remote sensing,agriVision,learned,0.0,78.3,53.3
+remote sensing,agriVision,wavelet,13.9,86.1,73.6
+remote sensing,pastis,fourier,90.9,9.1,100.0
+remote sensing,pastis,learned,0.0,85.7,74.3
+remote sensing,pastis,wavelet,57.1,42.9,96.4
+remote sensing,spaceNet,fourier,0.0,100.0,50.0
+remote sensing,spaceNet,learned,0.0,42.9,46.4
+remote sensing,spaceNet,wavelet,4.7,48.4,46.9
