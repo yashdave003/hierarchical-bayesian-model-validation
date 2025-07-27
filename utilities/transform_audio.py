@@ -135,11 +135,13 @@ def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_bas
             coeffs_.append[file_coeffs]
 
         if macro_processing: 
-            ## across all files, concaneate all coeffs associated with like freq.
-            ## i.e file i has coeffs Ci_200-400 and file j has coeffs Cj_200-400, store them in one array
-            ## for all  i != j < len(total_files)
-            ##, peform else process once 
-            macro_intervals, total_cuts = converge(coeffs_, [40, 4040], [4041, 8000], ks_threshold, 0, max_depth)
+            collective_coeffs_ = {freq: [] for freq in np.arange(40, 8001)} 
+            for file_coeffs_ in coeffs_: 
+                for freq in file_coeffs_.index:
+                    collective_coeffs_[freq].extend(file_coeffs_[freq])
+            collective_coeffs_ = pd.Series(collective_coeffs_)
+
+            macro_intervals, total_cuts = converge(collective_coeffs_, [40, 4040], [4041, 8000], ks_threshold, 0, max_depth)
             return macro_intervals
         else: 
             micro_intervals = []
@@ -155,9 +157,9 @@ def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_bas
     if partitions: 
         freq_bands = []
         for part_df in partitions: 
-             freq_bands.append(converge_freq(part_df[1]))
+             freq_bands.append(list(converge_freq(part_df[1]).index))
     else: 
-        freq_bands = converge_freq(glossary_df)
+        freq_bands = list(converge_freq(glossary_df).index)
 
     return freq_bands
 
@@ -180,7 +182,7 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
         coef_list modified if more cuts have been made, indeces may be tuples if frequences are banded together
         number of cuts made (for recrusive purposes )
     """
-   if max_depth and cuts >= max_depth: 
+   if (max_depth and cuts >= max_depth) or slit1_inv[0] >= slit1_inv[1] or slit2_inv[0] >= slit2_inv[1]: 
       ## base case
       return coef_list, 0 
 
@@ -193,10 +195,10 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
       slit2_.extend(coef_list[freq])
 
    ks_ = stats.ks_2samp(slit1_, slit2_).statistic
-   if ks_ > ks_threshold: 
+   if ks_ < ks_threshold: 
       ## base case
       ## bands are similar enough, merge them
-      new_slit = slit1_.extend(slit2_)
+      new_slit = slit1_ + slit2_
       for freq in np.arange(slit1_inv[0], slit2_inv[1]+1):
          coef_list.drop(freq, axis="index")
 
