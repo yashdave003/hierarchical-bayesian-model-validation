@@ -123,7 +123,7 @@ def transform_list(transform_file, file_list, file_names, *args,
     np.save(affix + '_freqs', first_freqs)
 
 
-def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_basis=None, ks_threshold=.05, max_depth=None, macro_processing=True): 
+def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_basis=None, pval_threshold=.05, max_depth=None, macro_processing=True): 
     
     def converge_freq(glossary_df): 
         naming_convention = "_" + transform + ".npz"
@@ -141,12 +141,12 @@ def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_bas
                     collective_coeffs_[freq].extend(file_coeffs_[freq])
             collective_coeffs_ = pd.Series(collective_coeffs_)
 
-            macro_intervals, total_cuts = converge(collective_coeffs_, [40, 4040], [4041, 8000], ks_threshold, 0, max_depth)
+            macro_intervals, total_cuts = converge(collective_coeffs_, [40, 4040], [4041, 8000], pval_threshold, 0, max_depth)
             return macro_intervals
         else: 
             micro_intervals = []
             for cl in coeffs_: 
-                interval, total_cuts = converge(cl, [40, 4040], [4041, 8000], ks_threshold, 0, max_depth)
+                interval, total_cuts = converge(cl, [40, 4040], [4041, 8000], pval_threshold, 0, max_depth)
                 micro_intervals.extend(interval)
             return micro_intervals
     
@@ -163,7 +163,7 @@ def frequency_band_convergence(IMPORT_DIR, glossary_df, transform, partition_bas
 
     return freq_bands
 
-def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None):
+def converge(coef_list, slit1_inv, slit2_inv, pval_threshold, cuts, max_depth=None):
    """
     frequency converge that tests if two slits frequencies has disimilar enough distributions to
     be considered separate by a ks-threshold, and if so, parses them apart in the coef list 
@@ -174,7 +174,7 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
         slit1_inv: array with 2 entries, first entry mapping to lower freq of interval, second entry mapping upper
                    frequency of interval
         slit2_inv: same format as slit1_inv
-        ks_threshold: metric of dsimiliarity
+        pval_threshold: metric of dsimiliarity
         cuts: how many cuts prior have been made
         max_depth: threshold limit for number of cuts
 
@@ -194,8 +194,8 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
    for freq in np.arange(slit2_inv[0], slit2_inv[1]+1):
       slit2_.extend(coef_list[freq])
 
-   ks_ = stats.ks_2samp(slit1_, slit2_).statistic
-   if ks_ < ks_threshold: 
+   pval_ = stats.ks_2samp(slit1_, slit2_).pvalue
+   if pval_ > pval_threshold: 
       ## base case
       ## bands are similar enough, merge them
       new_slit = slit1_ + slit2_
@@ -213,7 +213,7 @@ def converge(coef_list, slit1_inv, slit2_inv, ks_threshold, cuts, max_depth=None
       ## recrusive case
       ## bands are disimialr enough, repeat procress in their new intervals
 
-      coef_list, cuts_1 = converge(coef_list, [slit1_inv[0], (slit1_inv[0] + slit1_inv[1]) /2], [(slit1_inv[0] + slit1_inv[1]) /2 + 1, slit1_inv[1]], ks_threshold, cuts + 1, max_depth)
-      coef_list, cuts_2 = converge(coef_list, [slit2_inv[0], (slit2_inv[0] + slit2_inv[1]) /2], [(slit2_inv[0] + slit2_inv[1]) /2 + 1, slit2_inv[1]], ks_threshold, cuts_1, max_depth)
+      coef_list, cuts_1 = converge(coef_list, [slit1_inv[0], (slit1_inv[0] + slit1_inv[1]) /2], [(slit1_inv[0] + slit1_inv[1]) /2 + 1, slit1_inv[1]], pval_threshold, cuts + 1, max_depth)
+      coef_list, cuts_2 = converge(coef_list, [slit2_inv[0], (slit2_inv[0] + slit2_inv[1]) /2], [(slit2_inv[0] + slit2_inv[1]) /2 + 1, slit2_inv[1]], pval_threshold, cuts_1, max_depth)
 
       return coef_list, cuts_1 + cuts_2 
