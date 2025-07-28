@@ -234,8 +234,10 @@ def converge(coef_list, freqs, slit1_inv, slit2_inv, pval_threshold, cuts, max_d
 # ben's attempt
 # current potential issues:
 #   - requires being able to load entire coefficient matrix into memory, plus a copy
-#   - KS p-value is always numerically 0; using statistic to threshold instead
 #   - groups when max_depth is reached; maybe should assume no grouping by default
+# TODO: 
+#   - add presplitting? ton of compute for the first and largest comparison, which should never pass
+#   - regularly subsample empirical cdfs to reduce memory usage
 def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, max_depth=None, debug=False):
     freqs = np.load(freqs_npy_path)
     with np.load(coefs_npz_path, allow_pickle=True) as coefs_npz:
