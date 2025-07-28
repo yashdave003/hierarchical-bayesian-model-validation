@@ -17,6 +17,8 @@ from scipy import stats
 from scipy.spatial import ConvexHull
 import pylustrator
 from scipy.spatial import Delaunay
+from scipy.spatial import distance
+from sklearn.decomposition import PCA
 
 ROOT_DIR = Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 
