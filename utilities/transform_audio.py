@@ -12,7 +12,7 @@ import shutil
 from tqdm.notebook import tqdm
 
 
-USE_MATLAB = True # required for Erblet transforms
+USE_MATLAB = False # required for Erblet transforms
 if USE_MATLAB:
     import matlab.engine 
     eng = matlab.engine.start_matlab()
@@ -229,3 +229,41 @@ def converge(coef_list, freqs, slit1_inv, slit2_inv, pval_threshold, cuts, max_d
       upper_freqs, cuts_2 = converge(coef_list, freqs, [slit2_inv[0], int((slit2_inv[0] + slit2_inv[1]) /2)], [int((slit2_inv[0] + slit2_inv[1]) /2 + 1), slit2_inv[1]], pval_threshold, cuts_1, max_depth)
 
       return lower_freqs + upper_freqs, cuts_1 + cuts_2 
+   
+
+# ben's attempt
+# current potential issues:
+#   - requires being able to load entire coefficient matrix into memory, plus a copy
+#   - KS p-value is always numerically 0; using statistic to threshold instead
+#   - groups when max_depth is reached; maybe should assume no grouping by default
+def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, max_depth=None, debug=False):
+    freqs = np.load(freqs_npy_path)
+    with np.load(coefs_npz_path, allow_pickle=True) as coefs_npz:
+        coefs_loaded = [coefs_npz[file] for file in coefs_npz]
+
+    combine = np.concat if isinstance(coefs_loaded[0][0], np.ndarray) else np.array
+    flat_coefs = np.empty_like(freqs, dtype=object)
+    for i in range(len(freqs)):
+        complex_coefs = combine([coefs[i] for coefs in coefs_loaded])
+        flat_coefs[i] = np.concat([np.real(complex_coefs), np.imag(complex_coefs)])
+
+    # del coefs_loaded # should be garbage collected?
+    
+    def freq_band_helper(left_endpoint, right_endpoint, depth):
+        if depth == max_depth or left_endpoint + 1 == right_endpoint:
+            return [(left_endpoint, right_endpoint)]
+        
+        midpoint = (left_endpoint + right_endpoint) // 2
+        coefs_left = np.concat(flat_coefs[left_endpoint:midpoint])
+        coefs_right = np.concat(flat_coefs[midpoint:right_endpoint])
+        ks_res = stats.ks_2samp(coefs_left, coefs_right)
+        if debug:
+            print(f'{"  " * depth}[{left_endpoint:>2}, {midpoint:>2}) ~ '
+                  f'[{midpoint:>2}, {right_endpoint:>2}): {ks_res.statistic:.5f}, {ks_res.pvalue}')
+
+        if ks_res.statistic < ks_threshold:
+            return [(left_endpoint, right_endpoint)]
+        return freq_band_helper(left_endpoint, midpoint, depth + 1) \
+            + freq_band_helper(midpoint, right_endpoint, depth + 1)
+    
+    return freq_band_helper(0, len(freqs), 0)
