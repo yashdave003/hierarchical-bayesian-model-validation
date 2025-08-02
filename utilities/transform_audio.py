@@ -266,7 +266,7 @@ def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, batch_
                 else:
                     flat_coefs[i] = np.sort(coef_components)[::s].copy()
                 if debug:
-                    print(f'Compiled freq. {i}/{n_freqs}', end='\r')
+                    print(f'Compiled freq. {i + 1}/{n_freqs}', end='\r')
     
     def freq_band_helper(left_endpoint, right_endpoint, depth):
         if left_endpoint + 1 == right_endpoint or depth == max_depth:
