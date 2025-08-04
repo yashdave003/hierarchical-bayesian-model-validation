@@ -12,7 +12,7 @@ import shutil
 from tqdm.notebook import tqdm
 
 
-USE_MATLAB = True # required for Erblet transforms
+USE_MATLAB = False # required for Erblet transforms
 if USE_MATLAB:
     import matlab.engine 
     eng = matlab.engine.start_matlab()
@@ -132,7 +132,6 @@ def frequency_band_convergence(import_files, glossary_df, transform, partition_b
 
         npz_loaded = np.load(transform_coefs_file, allow_pickle=True)
         associated_freqs = np.load(associated_freqs_file, allow_pickle=True)
-        tick_freq = [0 for freq in range(len(associated_freqs))]
 
         naming_convention = "_" + transform
         coeffs_ = []
@@ -143,62 +142,25 @@ def frequency_band_convergence(import_files, glossary_df, transform, partition_b
 
         high_indx = len(associated_freqs)-1
         low_indx = 0
-        mid_indx = (high_indx + low_indx) / 2
+        mid_indx = int((high_indx + low_indx) / 2)
 
         if macro_processing: 
             collective_coeffs_ = [[] for f in range(len(associated_freqs))]
 
-            for file_coeffs_ in coeffs_: ## 1440 times
+            for file_coeffs_ in coeffs_:
                 for freq in file_coeffs_:
                     collective_coeffs_[freq].extend(file_coeffs_[freq])
             collective_coeffs_ = pd.Series(collective_coeffs_)
 
-            tick_freq, total_cuts = converge(collective_coeffs_, tick_freq, [low_indx, mid_indx], [mid_indx+1, high_indx], pval_threshold, 0, max_depth)
-
-            lower = None 
-            upper = None 
-
-            f_indx = 0
-            macro_intervals = []
-            ## [0 1 1 1 0 0 1 1]
-            while f_indx < len(tick_freq): 
-                if tick_freq[f_indx] == 0: ## meant to keep seperate
-                    macro_intervals.extend(associated_freqs[f_indx])
-                else: ## means we encountered a one
-                    if not lower: 
-                        lower = associated_freqs[f_indx]
-                    elif (f_indx + 1 < len(tick_freq) and tick_freq[f_indx]+1 == 0) or (f_indx + 1 == len(tick_freq) and tick_freq[f_indx] ==1):
-                        upper = associated_freqs[f_indx]
-                        macro_intervals.extend[(lower, upper)]
-
-                        lower = None
-                        upper = None
-                f_indx = f_indx + 1
+            macro_intervals, total_cuts = converge(collective_coeffs_, associated_freqs, [low_indx, mid_indx], [mid_indx+1, high_indx], pval_threshold, 0, max_depth)
             return macro_intervals
         else: 
             micro_intervals = []
             for cl in coeffs_: 
-                tick_freq, total_cuts = converge(cl, tick_freq, [low_indx, mid_indx], [mid_indx+1, high_indx], pval_threshold, 0, max_depth)
+                freqs_copy = associated_freqs[:]
+                freq_interval, total_cuts = converge(cl, freqs_copy, [low_indx, mid_indx], [mid_indx+1, high_indx], pval_threshold, 0, max_depth)
 
-                lower = None 
-                upper = None 
-
-                f_indx = 0
-                cur_interval = []
-                while f_indx < len(tick_freq): 
-                    if tick_freq[f_indx] == 0: ## meant to keep seperate
-                        cur_interval.extend(associated_freqs[f_indx])
-                    else: ## means we encountered a one
-                        if not lower: 
-                            lower = associated_freqs[f_indx]
-                        elif (f_indx + 1 < len(tick_freq) and tick_freq[f_indx]+1 == 0) or (f_indx + 1 == len(tick_freq) and tick_freq[f_indx] ==1):
-                            upper = associated_freqs[f_indx]
-                            cur_interval.extend[(lower, upper)]
-
-                            lower = None
-                            upper = None
-                    f_indx = f_indx + 1
-                micro_intervals.extend(cur_interval)
+                micro_intervals.extend(freq_interval)
             return micro_intervals
     
     partitions = None 
@@ -214,7 +176,7 @@ def frequency_band_convergence(import_files, glossary_df, transform, partition_b
 
     return freq_bands
 
-def converge(coef_list, tick_freq, slit1_inv, slit2_inv, pval_threshold, cuts, max_depth=None):
+def converge(coef_list, freqs, slit1_inv, slit2_inv, pval_threshold, cuts, max_depth=None):
    """
     frequency converge that tests if two slits frequencies has disimilar enough distributions to
     be considered separate by a ks-threshold, and if so, parses them apart in the coef list 
@@ -222,7 +184,7 @@ def converge(coef_list, tick_freq, slit1_inv, slit2_inv, pval_threshold, cuts, m
 
     Args:
         coef_list: pd.series where index indicates frequency (range) and assocaited coef list
-        tick_freq: an array with # of indeces as number of freqs, a 1 indicates it should be merged with adjacent ones
+        freq: an array indicating the matching frequenices to our coefficents 
         slit1_inv: array with 2 entries, first entry mapping to index of lower freq of interval, 
                    second entry mapping to index of upper frequency of interval
         slit2_inv: same format as slit1_inv
@@ -231,12 +193,17 @@ def converge(coef_list, tick_freq, slit1_inv, slit2_inv, pval_threshold, cuts, m
         max_depth: threshold limit for number of cuts
 
     Returns:
-        coef_list modified if more cuts have been made, indeces may be tuples if frequences are banded together
+        converged_freq: an array of converged frequencies, 
         number of cuts made (for recrusive purposes )
     """
    if (max_depth and cuts >= max_depth) or slit1_inv[0] >= slit1_inv[1] or slit2_inv[0] >= slit2_inv[1]: 
       ## base case
-      return coef_list, 0 
+      sing_freqs = []
+      if slit1_inv[0] == slit1_inv[1]: 
+          sing_freqs.append[freq[slit1_inv[0]]]
+      if slit2_inv[0] == slit2_inv[1]: 
+          sing_freqs.append[freq[slit2_inv[0]]]
+      return sing_freqs, 0 
 
    slit1_ = []
    slit2_ = []
@@ -249,23 +216,19 @@ def converge(coef_list, tick_freq, slit1_inv, slit2_inv, pval_threshold, cuts, m
    pval_ = stats.ks_2samp(slit1_, slit2_).pvalue
    if pval_ > pval_threshold: 
       ## base case
-      ## bands are similar enough,
-      new_tick_freq = tick_freq[:]
-      for i in np.arange(slit1_[0], slit2_inv[1]+1):
-          new_tick_freq[i] = 1
-      
-      return new_tick_freq, 0
+      ## bands are similar enough, merge them
+      lower_freq = freqs[slit1_inv[0]]
+      upper_freq = freqs[slit2_inv[1]]
+      return [[lower_freq, upper_freq]], 0
    
    else: 
       ## recrusive case
-      ## bands are disimialr enough, repeat procress in their new intervals
+      ## bands are disimilar enough,
+      ## keep them seperate 
 
-      tick_freq, cuts_1 = converge(coef_list, tick_freq, [slit1_inv[0], (slit1_inv[0] + slit1_inv[1]) /2], [(slit1_inv[0] + slit1_inv[1]) /2 + 1, slit1_inv[1]], pval_threshold, cuts + 1, max_depth)
-      tick_freq, cuts_2 = converge(coef_list, tick_freq, [slit2_inv[0], (slit2_inv[0] + slit2_inv[1]) /2], [(slit2_inv[0] + slit2_inv[1]) /2 + 1, slit2_inv[1]], pval_threshold, cuts_1, max_depth)
+      lower_freqs, cuts_1 = converge(coef_list, freqs, [slit1_inv[0], int((slit1_inv[0] + slit1_inv[1]) /2)], [int((slit1_inv[0] + slit1_inv[1]) /2 + 1), slit1_inv[1]], pval_threshold, cuts + 1, max_depth)
+      upper_freqs, cuts_2 = converge(coef_list, freqs, [slit2_inv[0], int((slit2_inv[0] + slit2_inv[1]) /2)], [int((slit2_inv[0] + slit2_inv[1]) /2 + 1), slit2_inv[1]], pval_threshold, cuts_1, max_depth)
 
-<<<<<<< HEAD
-      return tick_freq, cuts_1 + cuts_2 
-=======
       return lower_freqs + upper_freqs, cuts_1 + cuts_2 
    
 
@@ -327,4 +290,3 @@ def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, batch_
             + freq_band_helper(midpoint, right_endpoint, depth + 1)
     
     return freq_band_helper(0, n_freqs, 0)
->>>>>>> ca19758c45cb34539173632ff7092822959feea4
