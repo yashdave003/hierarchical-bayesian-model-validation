@@ -263,9 +263,6 @@ def converge(coef_list, tick_freq, slit1_inv, slit2_inv, pval_threshold, cuts, m
       tick_freq, cuts_1 = converge(coef_list, tick_freq, [slit1_inv[0], (slit1_inv[0] + slit1_inv[1]) /2], [(slit1_inv[0] + slit1_inv[1]) /2 + 1, slit1_inv[1]], pval_threshold, cuts + 1, max_depth)
       tick_freq, cuts_2 = converge(coef_list, tick_freq, [slit2_inv[0], (slit2_inv[0] + slit2_inv[1]) /2], [(slit2_inv[0] + slit2_inv[1]) /2 + 1, slit2_inv[1]], pval_threshold, cuts_1, max_depth)
 
-<<<<<<< HEAD
-      return tick_freq, cuts_1 + cuts_2 
-=======
       return lower_freqs + upper_freqs, cuts_1 + cuts_2 
    
 
@@ -327,4 +324,3 @@ def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, batch_
             + freq_band_helper(midpoint, right_endpoint, depth + 1)
     
     return freq_band_helper(0, n_freqs, 0)
->>>>>>> ca19758c45cb34539173632ff7092822959feea4
