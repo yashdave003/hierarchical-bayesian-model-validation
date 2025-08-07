@@ -127,37 +127,50 @@ def transform_list(transform_file, file_list, file_names, *args,
 # current potential issues:
 #   - groups when max_depth is reached; maybe should assume no grouping by default
 def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, batch_size=None,
-                        subsample_every=1, presplit_depth=1, max_depth=None, debug=False):
+                        subsample_every=1, presplit_depth=1, max_depth=None, cache=False, debug=False):
     '''if batch_size is None, load all files into memory at once'''
     freqs = np.load(freqs_npy_path)
     n_freqs = len(freqs)
+     
+    cache_match = False
+    if cache:
+        cache_args = (coefs_npz_path, freqs_npy_path, subsample_every)
+        if (cache_match := getattr(freq_band_groupings, 'cache_args', None) == cache_args):
+            flat_coefs = freq_band_groupings.cached_coefs
+        # else:
+        #     del freq_band_groupings.cached_coefs
 
-    if isinstance(subsample_every, (np.ndarray, list, tuple)):
-        assert len(subsample_every) == n_freqs, (
-            'subsample_every should either be a single number or have the same length as freqs'
-        )
-    else:
-        subsample_every = type('IndexableConstant', (), {
-            '__getitem__': (lambda c: lambda self, idx: c)(subsample_every)
-            })()
-    
-    flat_coefs = np.empty_like(freqs, dtype=object)
-    with np.load(coefs_npz_path, allow_pickle=True) as coefs_npz:
-        combine = np.concat if isinstance(coefs_npz[coefs_npz.files[0]][0], np.ndarray) else np.array
-        if batch_size is None:
-            batch_size = n_freqs
-        for j in range(-(-n_freqs // batch_size)):
-            batches = [coefs_npz[file][j*batch_size:(j+1)*batch_size].copy() for file in coefs_npz]
-            for k in range(len(batches[0])):
-                complex_coefs = combine([batch[k] for batch in batches])
-                coef_components = np.concat([np.real(complex_coefs), np.imag(complex_coefs)])
-                i = j * batch_size + k
-                if (s := subsample_every[i]) == 1:
-                    flat_coefs[i] = coef_components
-                else:
-                    flat_coefs[i] = np.sort(coef_components)[::s].copy()
-                if debug:
-                    print(f'Compiled freq. {i + 1}/{n_freqs}', end='\r')
+    if not cache_match:
+        if isinstance(subsample_every, (np.ndarray, list, tuple)):
+            assert len(subsample_every) == n_freqs, (
+                'subsample_every should either be a single number or have the same length as freqs'
+            )
+        else:
+            subsample_every = type('IndexableConstant', (), {
+                '__getitem__': (lambda c: lambda self, idx: c)(subsample_every)
+                })()
+
+        flat_coefs = np.empty_like(freqs, dtype=object)
+        with np.load(coefs_npz_path, allow_pickle=True) as coefs_npz:
+            combine = np.concat if isinstance(coefs_npz[coefs_npz.files[0]][0], np.ndarray) else np.array
+            if batch_size is None:
+                batch_size = n_freqs
+            for j in range(-(-n_freqs // batch_size)):
+                batches = [coefs_npz[file][j*batch_size:(j+1)*batch_size].copy() for file in coefs_npz]
+                for k in range(len(batches[0])):
+                    complex_coefs = combine([batch[k] for batch in batches])
+                    coef_components = np.concat([np.real(complex_coefs), np.imag(complex_coefs)])
+                    i = j * batch_size + k
+                    if (s := subsample_every[i]) == 1:
+                        flat_coefs[i] = coef_components
+                    else:
+                        flat_coefs[i] = np.sort(coef_components)[::s].copy()
+                    if debug:
+                        print(f'Compiled freq. {i + 1}/{n_freqs}', end='\r')
+        
+        if cache:
+            freq_band_groupings.cache_args = cache_args
+            freq_band_groupings.cached_coefs = flat_coefs
     
     def freq_band_helper(left_endpoint, right_endpoint, depth):
         if left_endpoint + 1 == right_endpoint or depth == max_depth:
