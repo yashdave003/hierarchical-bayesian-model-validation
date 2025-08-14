@@ -156,7 +156,7 @@ save_path_without_hull = Path(os.path.join(ROOT_DIR, 'publication', 'paper', 'CS
 
 if RERUN or save_path_without_hull.exists():
     main_df = pd.read_csv(save_path_without_hull).drop("Unnamed: 0", axis=1)
-    main_df = main_df[main_df['total_samples'] > 0]
+    main_df = main_df[main_df['total_samples'] > 100]
 else:
     print("Run make_results_csv.ipynb first")
 
