@@ -38,7 +38,7 @@ erblet_file.affix = 'erb'
 def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=20000, num_scales=100, 
              visualize=False, title='CWT with Morlet Wavelet'):
     rate, signal = wavfile.read(file_path)
-    frequencies = np.logspace(np.log10(low_freq), np.log10(high_freq), num_scales)
+    frequencies = np.geomspace(low_freq, high_freq, num_scales)
     scales = pywt.frequency2scale(wavelet, frequencies / rate)
     coefs, freqs = pywt.cwt(signal.astype('float32'), scales, wavelet, 1/rate)
 
@@ -124,31 +124,29 @@ def transform_list(transform_file, file_list, file_names, *args,
     np.save(affix + '_freqs', first_freqs)
 
 
-def load_coefs_by_freq(coefs_npz_path, freqs_npy_path, batch_size=None, subsample_every=1, cache=True, debug=False):
+def load_coefs_by_freq(coefs_npz_path, batch_size=None, subsample_every=1, cache=False, debug=False):
     '''if batch_size is None, load all files into memory at once'''
-
-    freqs = np.load(freqs_npy_path)
-    n_freqs = len(freqs)
-
     cache_match = False
     if cache:
-        cache_args = (coefs_npz_path, freqs_npy_path, subsample_every)
+        cache_args = (coefs_npz_path, subsample_every)
         if (cache_match := getattr(load_coefs_by_freq, 'cache_args', None) == cache_args):
             coefs_by_freq = load_coefs_by_freq.cached_coefs
 
     if not cache_match:
-        if isinstance(subsample_every, (np.ndarray, list, tuple)):
-            assert len(subsample_every) == n_freqs, (
-                'subsample_every should either be a single number or have the same length as freqs'
-            )
-        else:
-            subsample_every = type('IndexableConstant', (), {
-                '__getitem__': (lambda c: lambda self, idx: c)(subsample_every)
-                })()
-
-        coefs_by_freq = np.empty_like(freqs, dtype=object)
         with np.load(coefs_npz_path, allow_pickle=True) as coefs_npz:
-            combine = np.concat if isinstance(coefs_npz[coefs_npz.files[0]][0], np.ndarray) else np.array
+            n_freqs = len(test_file := coefs_npz[coefs_npz.files[0]])
+            combine = np.concat if isinstance(test_file[0], np.ndarray) else np.array
+
+            if isinstance(subsample_every, (np.ndarray, list, tuple)):
+                assert len(subsample_every) == n_freqs, (
+                    'subsample_every should either be a single number or have the same length as freqs'
+                )
+            else:
+                subsample_every = type('IndexableConstant', (), {
+                    '__getitem__': (lambda c: lambda self, idx: c)(subsample_every)
+                    })()
+            
+            coefs_by_freq = [None] * n_freqs
             if batch_size is None:
                 batch_size = n_freqs
             for j in range(-(-n_freqs // batch_size)):
@@ -172,9 +170,9 @@ def load_coefs_by_freq(coefs_npz_path, freqs_npy_path, batch_size=None, subsampl
 
 # current potential issues:
 #   - groups when max_depth is reached; maybe should assume no grouping by default
-def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, batch_size=None,
-                        subsample_every=1, presplit_depth=1, max_depth=None, cache=False, debug=False):
-    coefs_by_freq = load_coefs_by_freq(coefs_npz_path, freqs_npy_path, batch_size, subsample_every, cache, debug)
+def freq_band_groupings(coefs_npz_path, ks_threshold=.05, batch_size=None, subsample_every=1, 
+                        presplit_depth=1, max_depth=None, cache=False, debug=False):
+    coefs_by_freq = load_coefs_by_freq(coefs_npz_path, batch_size, subsample_every, cache, debug)
     n_freqs = len(coefs_by_freq)
     
     def freq_band_helper(left_endpoint, right_endpoint, depth):
@@ -199,6 +197,37 @@ def freq_band_groupings(coefs_npz_path, freqs_npy_path, ks_threshold=.05, batch_
             + freq_band_helper(midpoint, right_endpoint, depth + 1)
     
     return freq_band_helper(0, n_freqs, 0)
+
+def group_coefs_by_band(coefs_by_freq, bands):
+    return [np.concat(coefs_by_freq[band[0]:band[1]]) for band in bands]
+
+def geometric_width_bands(bands, visualize=False):
+    '''bands must have been computed for a continuous, linear frequency scale (fft, stft)'''
+    widths = np.array([band[1] - band[0] for band in bands])
+
+    indices = np.arange(len(widths))
+    log_widths = np.log(widths)
+
+    m = np.corrcoef(indices, log_widths)[0, 1] * np.std(log_widths) / np.std(indices)
+    b = np.mean(log_widths) - m * np.mean(indices)
+    pred_widths = np.exp(m * indices + b)
+
+    endpoints = np.round(np.cumsum(np.append(0, pred_widths)))
+    endpoints[-1] = bands[-1][1]
+    new_bands = [(int(start), int(end)) for start, end in zip(endpoints, endpoints[1:])]
+
+    if visualize:
+        plt.plot(widths, label='True widths')
+        plt.plot(pred_widths, label='Predicted (smooth)')
+        plt.plot([band[1] - band[0] for band in new_bands], label='Predicted (actual)', ls='--', c='r')
+        plt.yscale('log')
+        plt.xlabel('Band index')
+        plt.ylabel('Band width (log)')
+        plt.title('Frequency band widths after grouping')
+        plt.legend()
+        plt.show()
+    
+    return new_bands
 
 
 ####################################################
