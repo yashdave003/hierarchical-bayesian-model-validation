@@ -23,6 +23,7 @@ from scipy.spatial import Delaunay
 
 ROOT_DIR = Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 RERUN=False
+DPI=100
 
 def variance_prior(r, eta, scale=1):
     beta = (eta+1.5)/r
