@@ -26,7 +26,7 @@ else:
 
 def erblet_file(file_path, verify_reconstruction=False, visualize=False):
     if not USE_MATLAB:
-        raise NotImplementedError('MATLAB is required to perform Erblet transforms')
+        raise NotImplementedError('MATLAB is required to perform ERBlet transforms')
     
     c, fc = eng.erblet(file_path, verify_reconstruction, visualize, nargout=2)
     coefs = np.array([np.array(ci)[:, 0] for ci in c], dtype=object)
@@ -35,7 +35,7 @@ def erblet_file(file_path, verify_reconstruction=False, visualize=False):
     return coefs, freqs
 erblet_file.affix = 'erb'
 
-def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=20000, num_scales=100, 
+def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=24000, num_scales=100, 
              visualize=False, title='CWT with Morlet Wavelet'):
     rate, signal = wavfile.read(file_path)
     frequencies = np.geomspace(low_freq, high_freq, num_scales)
@@ -172,6 +172,7 @@ def load_coefs_by_freq(coefs_npz_path, batch_size=None, subsample_every=1, cache
 #   - groups when max_depth is reached; maybe should assume no grouping by default
 def freq_band_groupings(coefs_npz_path, ks_threshold=.05, batch_size=None, subsample_every=1, 
                         presplit_depth=1, max_depth=None, cache=False, debug=False):
+    '''if batch_size is None, load all files into memory at once'''
     coefs_by_freq = load_coefs_by_freq(coefs_npz_path, batch_size, subsample_every, cache, debug)
     n_freqs = len(coefs_by_freq)
     
@@ -201,32 +202,60 @@ def freq_band_groupings(coefs_npz_path, ks_threshold=.05, batch_size=None, subsa
 def group_coefs_by_band(coefs_by_freq, bands):
     return [np.concat(coefs_by_freq[band[0]:band[1]]) for band in bands]
 
-def geometric_width_bands(bands, visualize=False):
+def geometric_count_bands(bands, visualize=False):
     '''bands must have been computed for a continuous, linear frequency scale (fft, stft)'''
-    widths = np.array([band[1] - band[0] for band in bands])
+    counts = np.array([band[1] - band[0] for band in bands])
 
-    indices = np.arange(len(widths))
-    log_widths = np.log(widths)
+    indices = np.arange(len(counts))
+    log_counts = np.log(counts)
 
-    m = np.corrcoef(indices, log_widths)[0, 1] * np.std(log_widths) / np.std(indices)
-    b = np.mean(log_widths) - m * np.mean(indices)
-    pred_widths = np.exp(m * indices + b)
+    m = np.corrcoef(indices, log_counts)[0, 1] * np.std(log_counts) / np.std(indices)
+    b = np.mean(log_counts) - m * np.mean(indices)
+    pred_counts = np.exp(m * indices + b)
 
-    endpoints = np.round(np.cumsum(np.append(0, pred_widths)))
-    endpoints[-1] = bands[-1][1]
-    new_bands = [(int(start), int(end)) for start, end in zip(endpoints, endpoints[1:])]
+    new_band_indices = np.round(np.cumsum(np.append(0, pred_counts)))
+    new_band_indices[-1] = bands[-1][1]
+    new_bands = [(int(start), int(end)) for start, end in zip(new_band_indices, new_band_indices[1:])]
 
     if visualize:
-        plt.plot(widths, label='True widths')
-        plt.plot(pred_widths, label='Predicted (smooth)')
+        plt.plot(counts, label='True counts')
+        plt.plot(pred_counts, label='Predicted (smooth)')
         plt.plot([band[1] - band[0] for band in new_bands], label='Predicted (actual)', ls='--', c='r')
         plt.yscale('log')
         plt.xlabel('Band index')
-        plt.ylabel('Band width (log)')
-        plt.title('Frequency band widths after grouping')
+        plt.ylabel('Band count (log)')
+        plt.title('Frequency band counts after grouping')
         plt.legend()
         plt.show()
     
+    return new_bands
+
+def geometric_endpoint_bands(bands, freqs, visualize=False):
+    '''bands may have been computed for a nonlinear frequency scale, still preferably continuous'''
+    endpoints = np.array([freqs[band[0]] for band in bands])
+
+    indices = np.arange(len(endpoints))
+    log_endpoints = np.log(endpoints)
+    m = np.corrcoef(indices, log_endpoints)[0, 1] * np.std(log_endpoints) / np.std(indices)
+    b = np.mean(log_endpoints) - m * np.mean(indices)
+
+    new_endpoints = np.exp(m * indices + b)
+    new_band_indices = list(map(int, np.searchsorted(freqs, new_endpoints)))
+    new_band_indices.append(len(freqs))
+    new_bands = [(start, end) for start, end in zip(new_band_indices[:-1], new_band_indices[1:]) if start != end]
+
+    if visualize:
+        plt.plot(endpoints, label='True')
+        plt.plot(new_endpoints, label='Predicted (smooth)')
+        plt.plot([freqs[band[0]] for band in new_bands], label='Predicted (actual)', ls='--', c='r')
+        plt.axhline(freqs[-1], c='k', alpha=.5)
+        plt.yscale('log')
+        plt.xticks(range(0, len(endpoints), 2))
+        plt.xlabel('Band index')
+        plt.ylabel('Left endpoint frequency (log)')
+        plt.legend()
+        plt.show()
+
     return new_bands
 
 
