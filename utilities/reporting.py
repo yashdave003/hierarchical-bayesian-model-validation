@@ -159,7 +159,7 @@ if RERUN or save_path_without_hull.exists():
     main_df = pd.read_csv(save_path_without_hull).drop("Unnamed: 0", axis=1)
     main_df = main_df[main_df['total_samples'] > 100]
     main_df['best_beta'] = (main_df['best_eta'] + 1.5)/main_df['best_r']
-    main_df = main_df[(main_df['dataset'] != 'standardTesting')]
+    main_df = main_df#[(main_df['dataset'] != 'standardTesting')]
 else:
     print("Run make_results_csv.ipynb first")
 
