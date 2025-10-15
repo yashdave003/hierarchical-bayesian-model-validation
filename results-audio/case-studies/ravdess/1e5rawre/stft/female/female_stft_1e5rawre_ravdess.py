@@ -2,8 +2,8 @@
 # ## Setup, Loading Data and CDFs
 
 # %%
-DATA_NAME = 'ravdess-fullgeocomp' #dataset-compression
-TRANSFORM = 'fft-male' #transform-group
+DATA_NAME = 'ravdess-1e5rawre' #dataset-compression
+TRANSFORM = 'fft-female' #transform-group
 CHANNEL = ''
 
 # %%
