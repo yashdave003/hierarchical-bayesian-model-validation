@@ -1,0 +1,30 @@
+,transform,dataset_type,dataset,Number of Groups,Relative Frobenius Norm,Median Cosine Distance,90th Percentile Cosine Distance,Max Cosine Distance
+0,fourier,remote sensing,agriVision,32.0,2.9832858931743817e-05,0.0591,0.1683,0.2456
+1,fourier,remote sensing,pastis,32.0,3.178397474017646e-05,0.0273,0.0698,0.1466
+2,fourier,remote sensing,spaceNet,23.0,2.490862611582435e-05,0.0138,0.1396,0.3092
+21,fourier,remote sensing,z_aggregate,29.0,2.8841819929248212e-05,0.0334,0.1259,0.2338
+10,wavelet,classical,standardTesting,7.0,1.4614549501550481e-05,0.0036,0.0125,0.0149
+25,wavelet,classical,z_aggregate,7.0,1.4614549501550481e-05,0.0036,0.0125,0.0149
+11,wavelet,medical,syntheticMRI2D (axial),7.0,1.0185697769836863e-05,0.0059,0.0131,0.0142
+12,wavelet,medical,syntheticMRI2D (coronal),7.0,2.4052229319505336e-05,0.0064,0.0142,0.0169
+13,wavelet,medical,syntheticMRI2D (sagittal),7.0,1.1510938687772494e-05,0.0098,0.0265,0.0284
+14,wavelet,medical,syntheticMRI3D,6.0,3.4396000176648654e-05,0.0041,0.0418,0.0427
+26,wavelet,medical,z_aggregate,6.5625,2.362616241049279e-05,0.0059,0.0284,0.0299
+15,wavelet,natural,coco (indoor),8.0,2.3304019329166945e-05,0.0021,0.0194,0.022
+16,wavelet,natural,coco (outdoor),8.0,5.654193984293689e-06,0.0032,0.0424,0.047
+17,wavelet,natural,segmentAnything,9.0,9.511623876474147e-06,0.0031,0.0319,0.0372
+27,wavelet,natural,z_aggregate,8.3333,1.2823279063311593e-05,0.0028,0.0312,0.0354
+18,wavelet,remote sensing,agriVision,9.0,1.7177585063918447e-05,0.0048,0.018,0.0207
+19,wavelet,remote sensing,pastis,7.0,1.7441209921497406e-05,0.0038,0.0108,0.0131
+20,wavelet,remote sensing,spaceNet,8.0,1.5426190973984877e-05,0.005,0.0187,0.0227
+28,wavelet,remote sensing,z_aggregate,8.0,1.668166198646691e-05,0.0046,0.0158,0.0188
+3,learned,classical,standardTesting,54.0,3.200293064476915e-05,0.222,0.4207,0.9557
+22,learned,classical,z_aggregate,54.0,3.200293064476915e-05,0.222,0.4207,0.9557
+4,learned,natural,coco (indoor),62.0,3.1173484887112275e-05,0.183,0.327,0.8985
+5,learned,natural,coco (outdoor),64.0,3.147131216679028e-05,0.1766,0.302,0.8806
+6,learned,natural,segmentAnything,64.0,3.1348536313344956e-05,0.1921,0.3564,0.9157
+23,learned,natural,z_aggregate,63.3333,3.1331111122415837e-05,0.1839,0.3285,0.8982
+7,learned,remote sensing,agriVision,60.0,3.198633697818653e-05,0.1945,0.5011,0.9029
+8,learned,remote sensing,pastis,32.0,3.22351867857932e-05,0.2102,0.3897,0.8586
+9,learned,remote sensing,spaceNet,56.0,3.0488473610311942e-05,0.2262,0.4703,0.9206
+24,learned,remote sensing,z_aggregate,49.3333,3.156999912476389e-05,0.2103,0.4537,0.894
