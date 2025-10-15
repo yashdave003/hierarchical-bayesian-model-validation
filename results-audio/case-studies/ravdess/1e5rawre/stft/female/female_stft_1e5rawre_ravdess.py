@@ -3,7 +3,7 @@
 
 # %%
 DATA_NAME = 'ravdess-1e5rawre' #dataset-compression
-TRANSFORM = 'fft-female' #transform-group
+TRANSFORM = 'stft-female' #transform-group
 CHANNEL = ''
 
 # %%
