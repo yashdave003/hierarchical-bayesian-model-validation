@@ -39,17 +39,18 @@ def compute_cdf_vals(r, beta, scale, xs, use_matlab = True, debug = False):
                 else:
                     prior_cdf[j] = eng.compute_cdf_using_gengamma_with_scale(float(r), float(beta), float(scale), float(xs[j]), nargout=1)
     else:
-        def gauss_density(z, x):
-            return np.exp(-0.5 * (x/z)**2) / (np.sqrt(2*np.pi) * z)
+        def gauss_density(z):
+            return np.exp(-0.5 * (z)**2) / (np.sqrt(2*np.pi))
 
         def gen_gamma_cdf(x):
-            return prior_cdf.gammainc(beta, (x/scale)**r)
+            return scipy.special.gammainc(beta, (x/scale)**r)
 
-        def integrand(z, x):
-            return gauss_density(z, x) * (1 - gen_gamma_cdf((x/z)**2))
+
+        def integrand(z):
+            return gauss_density(z) * (1 - gen_gamma_cdf((x/z)**2))
         
         for j, x in enumerate(xs):
-            res = integrate.quad(integrand, 0, np.inf, args=(x,))[0]
+            res, _ = integrate.quad(integrand, -np.inf, 0)
             prior_cdf[j] = res
     return prior_cdf
 
