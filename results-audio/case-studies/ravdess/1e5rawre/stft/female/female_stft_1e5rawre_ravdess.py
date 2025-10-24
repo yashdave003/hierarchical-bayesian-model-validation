@@ -5,6 +5,7 @@
 DATA_NAME = 'ravdess-1e5rawre' #dataset-compression
 TRANSFORM = 'stft-female' #transform-group
 CHANNEL = ''
+NUM_BANDS = int(10)
 
 # %%
 path_list = DATA_NAME.split("-") + TRANSFORM.split("-")
@@ -17,9 +18,16 @@ FULL_DATA_NAME='-'.join(path_list)
 import git
 from pathlib import Path
 import os
+import sys
+
+sys.path.append('/scratch/users/lievhenry/hierarchical-bayesian-model-validation/utilities')
 
 ROOT_DIR = Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 CWD = os.path.join(ROOT_DIR, "results-audio", "case-studies", *path_list)
+
+print(os.getcwd())
+print(ROOT_DIR)
+print(CWD)
 
 assert CWD == os.getcwd()
 Path(os.path.join(CWD, "CSVs")).mkdir(exist_ok=True)
@@ -33,6 +41,7 @@ CWD
 
 # %%
 os.chdir(os.path.join(ROOT_DIR, "utilities"))
+print(os.getcwd())
 from testing import * # If MATLAB is not installed, open utilities and set to False
 from plotting import *
 os.chdir(CWD)
@@ -41,13 +50,11 @@ np.random.seed(0)
 # %%
 group_data_map = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", f'{FULL_DATA_NAME}.pickle'))
 group_total_samples = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", f'{FULL_DATA_NAME}-size.pickle'))
-NUM_BANDS = int(10) #Change to len(group_data_map) to use all bands
 
 # %%
 if 'erb' in TRANSFORM:
     group_data_map.popitem()
-    print(group_data_map)
-
+NUM_BANDS = max(min(NUM_BANDS, len(group_data_map) - 2), 1)
 # %%
 #if 'fourier' in TRANSFORM:
 #    GROUPS = np.arange(2, sorted(group_data_map)[-1] + 1)[::3]
