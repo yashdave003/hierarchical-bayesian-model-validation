@@ -41,7 +41,6 @@ CWD
 
 # %%
 os.chdir(os.path.join(ROOT_DIR, "utilities"))
-print(os.getcwd())
 from testing import * # If MATLAB is not installed, open utilities and set to False
 from plotting import *
 os.chdir(CWD)
@@ -55,6 +54,7 @@ group_total_samples = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-au
 if 'erb' in TRANSFORM:
     group_data_map.popitem()
 NUM_BANDS = max(min(NUM_BANDS, len(group_data_map) - 2), 1)
+
 # %%
 #if 'fourier' in TRANSFORM:
 #    GROUPS = np.arange(2, sorted(group_data_map)[-1] + 1)[::3]
