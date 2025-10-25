@@ -23,21 +23,28 @@ else:
 def get_project_root():
     return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 
-def compute_cdf_vals(r, beta, scale, xs, use_matlab = True, debug = False):
+def compute_cdf_vals(r, beta, scale, xs, use_matlab = True, debug = False, vectorized = True):
     prior_cdf = np.zeros_like(xs)
     if use_matlab:
-        if debug:
-            for j in tqdm(range(len(xs))):
-                if scale == 1:
-                    prior_cdf[j] = eng.compute_cdf_using_gengamma(float(r), float(beta), float(xs[j]), nargout=1)
-                else:
-                    prior_cdf[j] = eng.compute_cdf_using_gengamma_with_scale(float(r), float(beta), float(scale), float(xs[j]), nargout=1)
+        if vectorized:
+            if scale == 1:
+                prior_cdf_matlab = eng.compute_cdf_using_gengamma_vectorized(float(r), float(beta), matlab.double(xs.tolist()), nargout=1)
+            else:
+                prior_cdf_matlab = eng.compute_cdf_using_gengamma_with_scale_vectorized(float(r), float(beta), float(scale), matlab.double(xs.tolist()), nargout=1)
+            prior_cdf = np.array(prior_cdf_matlab).flatten()
         else:
-            for j, x in enumerate(xs):
-                if scale == 1:
-                    prior_cdf[j] = eng.compute_cdf_using_gengamma(float(r), float(beta), float(xs[j]), nargout=1)
-                else:
-                    prior_cdf[j] = eng.compute_cdf_using_gengamma_with_scale(float(r), float(beta), float(scale), float(xs[j]), nargout=1)
+            if debug:
+                for j in tqdm(range(len(xs))):
+                    if scale == 1:
+                        prior_cdf[j] = eng.compute_cdf_using_gengamma(float(r), float(beta), float(xs[j]), nargout=1)
+                    else:
+                        prior_cdf[j] = eng.compute_cdf_using_gengamma_with_scale(float(r), float(beta), float(scale), float(xs[j]), nargout=1)
+            else:
+                for j, x in enumerate(xs):
+                    if scale == 1:
+                        prior_cdf[j] = eng.compute_cdf_using_gengamma(float(r), float(beta), float(xs[j]), nargout=1)
+                    else:
+                        prior_cdf[j] = eng.compute_cdf_using_gengamma_with_scale(float(r), float(beta), float(scale), float(xs[j]), nargout=1)
     else:
         def gauss_density(z):
             return np.exp(-0.5 * (z)**2) / (np.sqrt(2*np.pi))
