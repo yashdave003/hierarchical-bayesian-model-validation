@@ -55,10 +55,6 @@ group_total_samples = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-au
 if 'erb' in TRANSFORM:
     group_data_map.popitem()
 NUM_BANDS = max(min(NUM_BANDS, len(group_data_map) - 2), 1)
-<<<<<<< HEAD:results-audio/case-studies/ravdess/1e5rawre/cwt/female/female_cwt_1e5rawre_ravdess.py
-
-=======
->>>>>>> 21ab75d8c4900a2efcd03ce649109a57c7650f1a:results-audio/case-studies/ravdess/1e5rawre/stft/female/female_stft_1e5rawre_ravdess.py
 # %%
 #if 'fourier' in TRANSFORM:
 #    GROUPS = np.arange(2, sorted(group_data_map)[-1] + 1)[::3]
