@@ -8,6 +8,7 @@ CHANNEL = ''
 NUM_BANDS = int(10)
 
 # %%
+
 path_list = DATA_NAME.split("-") + TRANSFORM.split("-")
 if CHANNEL:
     path_list.append(CHANNEL)
@@ -19,6 +20,8 @@ import git
 from pathlib import Path
 import os
 import sys
+import datetime
+print("Starting job for", DATA_NAME, TRANSFORM, CHANNEL, "at", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 sys.path.append('/scratch/users/lievhenry/hierarchical-bayesian-model-validation/utilities')
 
@@ -474,6 +477,7 @@ master_df.filter(regex="kstest_stat.*")
 
 # %%
 master_df.filter(regex="best.*")
+print("Finished job for", DATA_NAME, TRANSFORM, CHANNEL, "at", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 # %%
 
