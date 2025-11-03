@@ -10,3 +10,4 @@ results/case-studies/scheduler_brandon.ipynb
 results/case-studies/scheduler_yash.ipynb
 publication/paper/CSVs/final_results_with_hull.pickle
 transformed-data-audio
+anderson-darling/__pycache__/
