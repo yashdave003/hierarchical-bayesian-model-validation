@@ -47,7 +47,11 @@ def load_images_from_directory(directory, n=None, jitter=False, normalize=False)
     for i in tqdm(subset, desc="Loading images"):
         filename = all_images[i]
         if filename.endswith(".npz"):
-            img = np.load(os.path.join(directory, filename))["image"].astype(np.float64)
+            with np.load(os.path.join(directory, filename)) as z:
+                if len(z.files) == 1:
+                    img = z[z.files[0]].astype(np.float64)
+                else:
+                    img = np.load(os.path.join(directory, filename))["image"].astype(np.float64)
         elif filename.endswith(".jpg"):
             img = cv2.imread(os.path.join(directory, filename)).astype(np.float64)
         elif filename.endswith(".tif"):
@@ -74,3 +78,10 @@ def bootstrap_metric(x, metric=None, n_bootstrap=1000, bootstrap_size = 10000, c
     ci_upper = np.percentile(metric_values, (1 + ci) / 2 * 100)
     
     return metric_point_estimate, ci_lower, ci_upper, metric_values
+
+def rgb2gray(rgb):
+    # Based on luminance perception of human vision. This is usually what is going on under the hood.
+    if len(rgb.shape) != 3:
+        return rgb
+    else:
+        return rgb.dot([0.2989, 0.5870, 0.1140])
