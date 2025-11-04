@@ -5,6 +5,7 @@
 DATA_NAME = 'ravdess-1e5rawre' #dataset-compression
 TRANSFORM = 'fft-female' #transform-group
 CHANNEL = ''
+SUBSAMPLING = True
 NUM_BANDS = int(10)
 
 # %%
@@ -64,7 +65,10 @@ NUM_BANDS = max(min(NUM_BANDS, len(group_data_map) - 2), 1)
 #elif 'wavelet' in TRANSFORM:
 #    GROUPS = np.arange(2, sorted(group_data_map)[-1] + 1)
 #GROUPS = np.arange(2, sorted(group_data_map)[-1] + 1)[::max(len(group_data_map) // NUM_BANDS, 1)]
-GROUPS = np.linspace(2, sorted(group_data_map)[-1], NUM_BANDS, dtype=int)
+if SUBSAMPLING:
+    GROUPS = np.linspace(2, sorted(group_data_map)[-1], NUM_BANDS, dtype=int)
+else:
+    GROUPS = np.arange(0, sorted(group_data_map)[-1] + 1)
 
 
 cdfs_dir = os.path.join(ROOT_DIR, "results", "CDFs")
