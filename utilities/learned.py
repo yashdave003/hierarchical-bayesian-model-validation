@@ -85,3 +85,44 @@ def rgb2gray(rgb):
         return rgb
     else:
         return rgb.dot([0.2989, 0.5870, 0.1140])
+
+
+def gabor_load_images_from_directory(directory, n=None, jitter=False, normalize=False):
+    # FOR NPZ FILES, WE ASSUME THE IMAGE IS SAVED IN RGB FORMAT, SO WE CONVERT TO BGR
+    # FOR JPG AND TIF FILES, WE READ USING CV2, WHICH LOADS IN BGR FORMAT BY DEFAULT
+    all_images = os.listdir(directory)
+    num_images = len(all_images)
+
+    if not n:
+        n = num_images
+
+    images = []
+    subset = np.random.permutation(num_images)[:n]
+    
+    for i in tqdm(subset, desc="Loading images"):
+        filename = all_images[i]
+        if filename.lower().endswith(".npz"):
+            with np.load(os.path.join(directory, filename)) as z:
+                # if single array inside, use it; else prefer "image" key
+                if len(z.files) == 1:
+                    img = z[z.files[0]].astype(np.float64)
+                else:
+                    img = z["image"].astype(np.float64)
+
+            # Convert RGB (saved) -> BGR (desired) if 3-channel
+            if img.ndim == 3 and img.shape[-1] == 3:
+                img = img[..., ::-1]
+        elif filename.endswith(".jpg"):
+            img = cv2.imread(os.path.join(directory, filename)).astype(np.float64)
+        elif filename.endswith(".tif"):
+            img = np.array(cv2.imread(os.path.join(directory, filename), cv2.IMREAD_UNCHANGED)).astype(np.float64)
+            if img.ndim == 2:  # grayscale image
+                img = np.stack([img] * 3, axis=-1)
+
+        if jitter:
+            img += np.random.uniform(-0.5, 0.5, size=img.shape)
+        if normalize:
+            img = (img - np.mean(img))/np.std(img)
+        images.append(img)
+
+    return np.array(images)
