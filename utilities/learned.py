@@ -54,10 +54,14 @@ def load_images_from_directory(directory, n=None, jitter=False, normalize=False)
                     img = np.load(os.path.join(directory, filename))["image"].astype(np.float64)
         elif filename.endswith(".jpg"):
             img = cv2.imread(os.path.join(directory, filename)).astype(np.float64)
+            if img.ndim == 3 and img.shape[-1] == 3:
+                img = img[..., ::-1]
         elif filename.endswith(".tif"):
             img = np.array(cv2.imread(os.path.join(directory, filename), cv2.IMREAD_UNCHANGED)).astype(np.float64)
             if img.ndim == 2:  # grayscale image
                 img = np.stack([img] * 3, axis=-1)
+            if img.ndim == 3 and img.shape[-1] == 3:
+                img = img[..., ::-1]
 
         if jitter:
             img += np.random.uniform(-0.5, 0.5, size=img.shape)
