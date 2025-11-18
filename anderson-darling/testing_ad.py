@@ -1,25 +1,25 @@
 import scipy
 import numpy as np
 
-def compute_A2(x, F, presorted=True, eps=1e-16):
+def compute_adstat(x, F, true_n=None, sorted_sample=True, eps=1e-16):
     '''
-    x.shape = (n, N) 
-        n = sample size
-        N = # of samples
-    F = cdf of the H_0 distribution
+    x.shape = (sample_size, ...) 
+    F = cdf of the null distribution
+    true_n = size of the full sample, if the dataset passed in is a subsample
     '''
-    if not presorted:
+    if not sorted_sample:
         x = np.sort(x, axis=0)
     z = np.clip(F(x), eps, 1 - eps)
 
     n = x.shape[0]
     i = np.arange(1, 2 * n, 2).reshape((n,) + (1,) * (len(x.shape) - 1))
-    S = np.sum(i * (np.log(z) + np.log(1 - z[::-1])), axis=0) / n
-    return -n - S
+    S = np.mean(i * (np.log(z) + np.log(1 - z[::-1])), axis=0)
+    rescale_factor = 1 if true_n is None else true_n / n
+    return rescale_factor * (-n - S)
 
 # TODO: determine N automatically via stability condition
 @np.vectorize
-def evaluate_asymptotic_cdf(z, N=5):
+def ad_asymptotic_cdf(z, N=5):
     '''
     asymptotic cdf of A^2 under H_0 at z using first N terms in expansion
     https://doi.org/10.1214/aoms/1177729437 (pp. 204)
