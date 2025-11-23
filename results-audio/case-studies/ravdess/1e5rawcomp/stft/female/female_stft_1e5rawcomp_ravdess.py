@@ -131,7 +131,7 @@ master_df
 
 # %%
 EXCLUDE_CUTOFFS = [0, 25, 50, 75, 100, 150, 200, 250, 300, 350, 500] # TODO For quick testing purposes
-SCALE_CAP = 1e7
+SCALE_CAP = 1e5
 
 # %%
 augmented_var_df_path = Path(os.path.join(CWD, "CSVs", "augmented_var_df.csv"))
