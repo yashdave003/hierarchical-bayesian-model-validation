@@ -2,9 +2,9 @@
 # ## Setup, Loading Data and CDFs
 
 # %%
-DATASET = 'ravdess'
 DATA_NAME = 'ravdess-1e5rawre' #dataset-compression
 TRANSFORM = 'fft-female' #transform-group
+DATASET = DATA_NAME.split("-")[0]
 CHANNEL = ''
 SUBSAMPLING = True
 NUM_BANDS = int(10)
