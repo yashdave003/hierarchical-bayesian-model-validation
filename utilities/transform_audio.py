@@ -370,3 +370,172 @@ def converge(coef_list, freqs, slit1_inv, slit2_inv, pval_threshold, cuts, max_d
 
       return lower_freqs + upper_freqs, cuts_1 + cuts_2 
    
+# Functions for KS Banding Template Notebook
+def preprocess_and_save_by_band(coefs_npz_path, unified_bands_indices, temp_dir, group_id, group_map):
+    """
+    Shards the NPZ file into binary files. 
+    """
+    print(f"  Pre-processing and sharding data by band to: {temp_dir}")
+    
+    current_group_names = group_map[group_id]
+    
+    # Open file handles
+    file_writers = {}
+    for i, _ in enumerate(unified_bands_indices):
+        file_writers[i] = {}
+        for group_name in current_group_names:
+            temp_file_path = temp_dir / f"band_{i}_{group_name}.bin"
+            file_writers[i][group_name] = open(temp_file_path, 'wb')
+
+    with np.load(coefs_npz_path, allow_pickle=True) as data:
+        total_files = len(data.files)
+        print(f"  - Found {total_files} files in NPZ archive. Starting sharding...")
+        
+        for i, item in enumerate(data.files):
+            if (i + 1) % 200 == 0:
+                print(f"    - Sharding file {i+1}/{total_files}...")
+        
+            try:
+                base_filename = item.split('_')[0]
+                actor_id = int(base_filename.split('-')[group_id])
+                group_label = current_group_names[1] if actor_id % 2 == 0 else current_group_names[0]
+                
+                coeffs = data[item]
+                if coeffs.size == 0:
+                    continue
+
+                num_freqs = coeffs.shape[0]
+
+                for band_idx, (start_idx, end_idx) in enumerate(unified_bands_indices):
+                    if start_idx < num_freqs:
+                        # Handle slicing based on dimensions
+                        if coeffs.ndim == 2:
+                            # STFT: (Freq, Time) -> Slice rows
+                            band_coeffs = coeffs[start_idx:end_idx, :]
+                        elif coeffs.ndim == 1:
+                            # FFT: (Freq,) -> Slice elements
+                            band_coeffs = coeffs[start_idx:end_idx]
+                        else:
+                            continue # Skip >2D or 0D
+
+                        # Check if slice is empty
+                        if band_coeffs.size > 0:
+                            # Ensure complex64 for consistency
+                            file_writers[band_idx][group_label].write(band_coeffs.astype(np.complex64).tobytes())
+            
+            except Exception:
+                continue
+
+    # Close handles
+    for band_idx in file_writers:
+        for group_name in file_writers[band_idx]:
+            file_writers[band_idx][group_name].close()
+
+
+def compare_distributions_from_files(temp_dir, unified_bands_indices, group_names):
+    print(f"  Performing KS test band by band from sharded files...")
+    
+    group1_name, group2_name = group_names[0], group_names[1]
+    results = []
+
+    for i, (start_idx, end_idx) in enumerate(unified_bands_indices):
+        path_g1 = temp_dir / f"band_{i}_{group1_name}.bin"
+        path_g2 = temp_dir / f"band_{i}_{group2_name}.bin"
+
+        if not path_g1.exists() or not path_g2.exists() or path_g1.stat().st_size == 0 or path_g2.stat().st_size == 0:
+            continue
+
+        group1_coeffs = np.fromfile(path_g1, dtype=np.complex64)
+        group2_coeffs = np.fromfile(path_g2, dtype=np.complex64)
+        
+        ks_stat_real, _ = stats.ks_2samp(np.real(group1_coeffs), np.real(group2_coeffs))
+        ks_stat_imag, _ = stats.ks_2samp(np.imag(group1_coeffs), np.imag(group2_coeffs))
+        
+        results.append({
+            'band_indices': f'{start_idx}-{end_idx - 1}' if end_idx > start_idx + 1 else str(start_idx),
+            'ks_stat_real': ks_stat_real,
+            'ks_stat_imag': ks_stat_imag,
+        })
+    return pd.DataFrame(results)
+
+
+def load_single_group_by_band(coefs_npz_path: str,
+                              unified_bands_indices: list,
+                              group_id: int,
+                              group_map: dict,
+                              category_map: dict,
+                              target_group: str):
+    print(f"  - Loading data for target group '{target_group}' from: {os.path.basename(coefs_npz_path)}")
+    group_names = group_map[group_id]
+
+    processed_data = {
+        target_group: {
+            (f'{start}-{end - 1}' if end > start + 1 else str(start)): {'real': [], 'imag': []}
+            for start, end in unified_bands_indices
+        }
+    }
+
+    freq_to_band_map = {}
+    for start, end in unified_bands_indices:
+        band_label = f'{start}-{end - 1}' if end > start + 1 else str(start)
+        for freq_idx in range(start, end):
+            freq_to_band_map[freq_idx] = band_label
+
+    with np.load(coefs_npz_path, allow_pickle=True) as data:
+        total_files = len(data.files)
+        print(f"  - {total_files} files, collecting for '{target_group}'...")
+        processed_count = 0
+        for i, item in enumerate(data.files):
+            try:
+                base_filename = item.split('_')[0]
+                actor_id = int(base_filename.split('-')[group_id])
+                group_label = group_names[1] if actor_id % 2 == 0 else group_names[0]
+
+                if group_label != target_group:
+                    continue
+                
+                processed_count += 1
+                if processed_count % 200 == 0:
+                    print(f"    - Found and processed {processed_count} files for '{target_group}'...")
+
+                coeffs = data[item]
+
+                if coeffs.ndim == 2:  # 2D array (e.g., STFT)
+                    for freq_idx in range(coeffs.shape[0]):
+                        band_label = freq_to_band_map.get(freq_idx)
+                        if band_label:
+                            target_list_real = processed_data[target_group][band_label]['real']
+                            target_list_imag = processed_data[target_group][band_label]['imag']
+                            target_list_real.extend(np.real(coeffs[freq_idx, :]))
+                            target_list_imag.extend(np.imag(coeffs[freq_idx, :]))
+
+                elif coeffs.ndim == 1: # 1D array
+                    if coeffs.dtype == object:  # Jagged array (e.g., CWT/Erblet)
+                        for freq_idx, inner_array in enumerate(coeffs):
+                            band_label = freq_to_band_map.get(freq_idx)
+                            if band_label and hasattr(inner_array, '__iter__'):
+                                target_list_real = processed_data[target_group][band_label]['real']
+                                target_list_imag = processed_data[target_group][band_label]['imag']
+                                target_list_real.extend(np.real(inner_array))
+                                target_list_imag.extend(np.imag(inner_array))
+                    else: # Standard 1D array (e.g., FFT)
+                         for freq_idx, coeff_val in enumerate(coeffs):
+                            band_label = freq_to_band_map.get(freq_idx)
+                            if band_label:
+                                processed_data[target_group][band_label]['real'].append(np.real(coeff_val))
+                                processed_data[target_group][band_label]['imag'].append(np.imag(coeff_val))
+
+            except (ValueError, IndexError) as e:
+                print(f"  - Warning: Could not parse filename '{item}', skipped. Error: {e}")
+                continue
+
+    print(f"  - Data collection complete for '{target_group}'. Converting lists to NumPy arrays...")
+    for band_label, data_dict in processed_data[target_group].items():
+        if data_dict['real']:
+            data_dict['real'] = np.array(data_dict['real'])
+            data_dict['imag'] = np.array(data_dict['imag'])
+        else:
+            data_dict['real'] = np.array([])
+            data_dict['imag'] = np.array([])
+
+    return processed_data
