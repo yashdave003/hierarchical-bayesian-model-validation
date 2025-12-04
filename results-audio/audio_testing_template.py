@@ -4,7 +4,6 @@
 # %%
 DATA_NAME = 'ravdess-1e5rawre' #dataset-compression
 TRANSFORM = 'fft-female' #transform-group
-DATASET = DATA_NAME.split("-")[0]
 CHANNEL = ''
 SUBSAMPLING = True
 NUM_BANDS = int(10)
@@ -52,8 +51,8 @@ os.chdir(CWD)
 np.random.seed(0)
 
 # %%
-group_data_map = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", DATASET, f'{FULL_DATA_NAME}.pickle'))
-group_total_samples = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", DATASET, f'{FULL_DATA_NAME}-size.pickle'))
+group_data_map = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", f'{FULL_DATA_NAME}.pickle'))
+group_total_samples = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", f'{FULL_DATA_NAME}-size.pickle'))
 
 # %%
 if 'erb' in TRANSFORM:
