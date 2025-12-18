@@ -24,7 +24,7 @@ from tqdm import tqdm
 
 ROOT_DIR = Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 RERUN=False
-DPI=100
+DPI=300
 
 def variance_prior(r, eta, scale=1):
     beta = (eta+1.5)/r
