@@ -6,11 +6,11 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-import plotly.express as px
+#import plotly.express as px
 import ipywidgets as widgets
 from IPython.display import display
 import numpy as np
-import plotly.graph_objects as go
+#import plotly.graph_objects as go
 from IPython.display import clear_output
 import scipy
 from scipy import stats
