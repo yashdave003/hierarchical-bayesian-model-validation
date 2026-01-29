@@ -2,25 +2,40 @@
 0,fourier,remote sensing,agriVision,2.6e+6,0.005,2.3,95.5,68.2
 1,fourier,remote sensing,pastis,2.6e+5,0.002,90.9,100.0,100.0
 2,fourier,remote sensing,spaceNet,1.8e+6,0.005,0.0,100.0,46.9
-19,fourier,remote sensing,z_aggregate,5.5e+05,0.003,34.2,98.4,74.2
-9,wavelet,medical,syntheticMRI2D (axial),4.2e+6,0.007,0.0,76.2,33.3
-10,wavelet,medical,syntheticMRI2D (coronal),3.7e+6,0.004,9.5,80.9,57.1
-11,wavelet,medical,syntheticMRI2D (sagittal),2.4e+6,0.005,0.0,81.0,76.2
-12,wavelet,medical,syntheticMRI3D,1.6e+6,0.005,7.1,69.0,64.3
-22,wavelet,medical,z_aggregate,2.9e+06,0.005,4.8,75.3,59.0
-13,wavelet,natural,coco (indoor),2.6e+5,0.013,25.0,50.0,18.8
-14,wavelet,natural,coco (outdoor),3.9e+5,0.011,25.0,53.1,12.5
-15,wavelet,natural,segmentAnything,1.8e+6,0.004,25.0,85.2,24.1
-23,wavelet,natural,z_aggregate,4.5e+05,0.008,25.0,63.7,18.7
-16,wavelet,remote sensing,agriVision,1.7e+6,0.005,15.3,100.0,70.8
-17,wavelet,remote sensing,pastis,1.5e+5,0.004,57.1,100.0,100.0
-18,wavelet,remote sensing,spaceNet,1.6e+6,0.012,4.7,53.1,17.2
-24,wavelet,remote sensing,z_aggregate,7.e+05,0.007,24.0,84.4,61.5
-3,learned,natural,coco (indoor),2.e+8,0.009,0.0,64.5,21.0
-4,learned,natural,coco (outdoor),2.e+8,0.01,0.0,57.8,1.6
-5,learned,natural,segmentAnything,7.9e+8,0.005,0.0,81.2,40.6
-20,learned,natural,z_aggregate,2.e+08,0.008,0.0,67.9,21.1
-6,learned,remote sensing,agriVision,7.9e+8,0.005,0.0,73.3,43.3
-7,learned,remote sensing,pastis,4.9e+7,0.004,0.0,93.8,87.5
-8,learned,remote sensing,spaceNet,4.8e+8,0.013,0.0,42.9,21.4
-21,learned,remote sensing,z_aggregate,4.8e+08,0.006,0.0,66.2,44.6
+31,fourier,remote sensing,z_aggregate,5.5e+05,0.003,34.2,98.4,74.2
+3,gabor,medical,syntheticMRI2D (axial),1.8e+8,0.005,0.0,95.2,59.5
+4,gabor,medical,syntheticMRI2D (coronal),1.4e+8,0.003,0.0,95.2,88.1
+5,gabor,medical,syntheticMRI2D (sagittal),9.7e+7,0.004,0.0,97.6,76.2
+32,gabor,medical,z_aggregate,1.4e+08,0.004,0.0,96.0,74.6
+6,gabor,natural,coco (indoor),6.6e+7,0.006,0.0,97.0,10.7
+7,gabor,natural,coco (outdoor),6.6e+7,0.004,0.0,95.8,0.0
+8,gabor,natural,segmentAnything,2.6e+8,0.003,0.0,100.0,57.1
+9,gabor,natural,standardTesting,2.4e+6,0.008,0.0,57.1,21.4
+33,gabor,natural,z_aggregate,6.6e+07,0.004,0.0,94.5,22.5
+10,gabor,remote sensing,agriVision,2.6e+8,0.003,0.0,100.0,66.7
+11,gabor,remote sensing,pastis,1.6e+7,0.001,0.6,100.0,98.2
+12,gabor,remote sensing,spaceNet,1.6e+8,0.007,0.0,92.9,28.6
+34,gabor,remote sensing,z_aggregate,1.6e+08,0.003,0.2,97.6,64.5
+20,wavelet,medical,syntheticMRI2D (axial),4.2e+6,0.007,0.0,76.2,33.3
+21,wavelet,medical,syntheticMRI2D (coronal),3.7e+6,0.004,9.5,80.9,57.1
+22,wavelet,medical,syntheticMRI2D (sagittal),2.4e+6,0.005,0.0,81.0,76.2
+23,wavelet,medical,syntheticMRI3D,1.6e+6,0.005,7.1,69.0,64.3
+37,wavelet,medical,z_aggregate,2.9e+06,0.005,4.8,75.3,59.0
+24,wavelet,natural,coco (indoor),2.6e+5,0.013,25.0,50.0,18.8
+25,wavelet,natural,coco (outdoor),3.9e+5,0.011,25.0,53.1,12.5
+26,wavelet,natural,segmentAnything,1.8e+6,0.004,25.0,85.2,24.1
+27,wavelet,natural,standardTesting,9.2e+3,0.013,9.5,47.6,33.3
+38,wavelet,natural,z_aggregate,4.1e+05,0.008,24.0,62.6,19.6
+28,wavelet,remote sensing,agriVision,1.7e+6,0.005,15.3,100.0,70.8
+29,wavelet,remote sensing,pastis,1.5e+5,0.004,57.1,100.0,100.0
+30,wavelet,remote sensing,spaceNet,1.6e+6,0.012,4.7,53.1,17.2
+39,wavelet,remote sensing,z_aggregate,7.e+05,0.007,24.0,84.4,61.5
+13,learned,natural,coco (indoor),2.e+8,0.009,0.0,64.5,21.0
+14,learned,natural,coco (outdoor),2.e+8,0.01,0.0,57.8,1.6
+15,learned,natural,segmentAnything,7.9e+8,0.005,0.0,81.2,40.6
+16,learned,natural,standardTesting,7.1e+6,0.014,0.0,24.1,16.7
+35,learned,natural,z_aggregate,2.e+08,0.009,0.0,58.2,20.1
+17,learned,remote sensing,agriVision,7.9e+8,0.005,0.0,73.3,43.3
+18,learned,remote sensing,pastis,4.9e+7,0.004,0.0,93.8,87.5
+19,learned,remote sensing,spaceNet,4.8e+8,0.013,0.0,42.9,21.4
+36,learned,remote sensing,z_aggregate,4.8e+08,0.006,0.0,66.2,44.6
