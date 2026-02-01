@@ -13,7 +13,7 @@ def compute_adstat(x, F, true_n=None, sorted_sample=True, eps=1e-16):
 
     n = x.shape[0]
     i = np.arange(1, 2 * n, 2).reshape((n,) + (1,) * (len(x.shape) - 1))
-    S = np.mean(i * (np.log(z) + np.log(1 - z[::-1])), axis=0)
+    S = np.mean(i * (np.log(z) + np.log1p(-z[::-1])), axis=0)
     rescale_factor = 1 if true_n is None else true_n / n
     return rescale_factor * (-n - S)
 
