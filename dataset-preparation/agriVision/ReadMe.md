@@ -1,6 +1,5 @@
-SpaceNet Data Cleaning Process:
-1. Run the randomizer.ipynb notebook if presented with raw data files, the notebook randomzied the entire dataset into batches of 1500 images.
-2. Copy the cleaned batches of images into the rawdata folder if needed, run the transform_agriVision.ipynb file.
+README (AgriVision batching + jitter/normalization)
 
-randomizer.ipynb: The notebook randomzied the entire dataset into batches of 1500 images.
-transform_agriVision.ipynb: Fourier/Wavelet transformation with pixel level jitter + batch normaliztion based on tiles.
+This script reads raw images from ROOT_DIR/raw-data/agriVision/uncleaned/, randomly shuffles them (seeded), splits them into 10 batches of 1500 images, and writes each batch to a folder named batch{idx}-agriVision-RGB-cleaned-jitter/ inside ROOT_DIR/raw-data/agriVision/. Each output folder contains compressed .npz files storing a float32 RGB image array under the key "image" after applying per-batch noise jitter and per-channel normalization.
+
+Downstream: these batch folders are designed to be discovered by transformation pipelines via RAW_DATA_SUFFIX="agriVision-RGB-cleaned-jitter"; Set BATCH_NUM = 0..9 and use npz_opener() to load the saved RGB arrays.

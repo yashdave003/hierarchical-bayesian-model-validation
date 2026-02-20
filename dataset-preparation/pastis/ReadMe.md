@@ -1,5 +1,2 @@
-Pastis Data Cleaning Process:
-1. Make sure that there are 1590 raw images as the input dataset. The cleaning of these 1590 images are done by hand to eliminate blurry images.
-2. Copy the cleaned images into the rawdata folder if needed, run the transform_pastis.ipynb file. Check the dataset path.
-
-stransform_pastis.ipynb: Fourier/Wavelet transformation with pixel level jitter + batch normaliztion based on tiles.
+This script(data_cleaning_pastis.ipynb) cleans the PASTIS image dataset by renaming all images in raw-data/pastis/uncleaned to test#.png and deleting any files listed in dataset-preparation/pastis/removed_data.txt.
+It then applies batch-wise noise jitter + channel normalization and saves the processed outputs as compressed .npz files in raw-data/full-pastis-RGB-jitter.
