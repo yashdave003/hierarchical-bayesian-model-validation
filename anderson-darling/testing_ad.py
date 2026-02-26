@@ -31,3 +31,47 @@ def ad_asymptotic_cdf(z, N=5):
         integral = scipy.integrate.quad(integrand, 0, np.inf)[0]
         return integral * scipy.special.binom(-.5, j) * (4*j+1) * np.exp(-t_j)
     return np.sqrt(2 * np.pi) / z * np.sum(term(np.arange(N)))
+
+
+def gridsearch_ad(sample, all_cdfs, true_n=None, top_k=1, debug=False, scales=None):
+    '''
+    Takes in a sample and list of CDFs,
+    Returns the AD statistic computed with respect to each CDF, the top-k minimizing parameters and the corresponding distances
+    '''
+    cdf_keys = sorted(all_cdfs)
+    cdf_splines = [all_cdfs[key] for key in cdf_keys]
+    num_cdfs = len(cdf_keys)
+    adstats = np.zeros(num_cdfs)
+
+    if debug:
+        from tqdm.notebook import tqdm
+        loop = tqdm(range(num_cdfs))
+    else:
+        loop = range(num_cdfs)
+    for i in loop:
+        if scales is not None:
+            scale = scales[i]
+            adstats[i] = compute_adstat(sample / np.sqrt(scale), cdf_splines[i], true_n=true_n)
+        else:
+            adstats[i] = compute_adstat(sample, cdf_splines[i], true_n=true_n)
+
+    if debug:
+        print(f"Finding Minimum after computing {num_cdfs} CDFs")
+    if top_k > 1:
+        min_k = np.zeros(top_k, dtype=int)
+        adstats_copy = adstats.copy()
+        for i in np.arange(top_k):
+            min_k[i] = np.argmin(adstats_copy)
+            adstats_copy[min_k[i]] = np.inf
+        return adstats, [cdf_keys[j] for j in min_k], adstats[min_k]
+    else:
+        return adstats, cdf_keys[np.argmin(adstats)], np.min(adstats)
+
+
+def add_tests_to_df_ad(cdfs_df, group, var_kurt_df, adstats, ad_cutoff):
+    cdfs_df['pass_var'] = (cdfs_df['variance'] > var_kurt_df.loc[group, 'var_lower']) & (cdfs_df['variance'] < var_kurt_df.loc[group, 'var_upper'])
+    cdfs_df['pass_kurt'] = (cdfs_df['kurtosis'] > var_kurt_df.loc[group, 'kurt_lower']) & (cdfs_df['kurtosis'] < var_kurt_df.loc[group, 'kurt_upper'])
+    cdfs_df['adstat'] = adstats
+    # cdfs_df['ksstat'] = adstats  # alias for combo_test_plot which hardcodes 'ksstat'
+    cdfs_df['pass_adtest'] = cdfs_df['adstat'] < ad_cutoff
+    return cdfs_df

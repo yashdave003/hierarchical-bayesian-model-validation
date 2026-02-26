@@ -13,7 +13,8 @@ GROUP_NAME = 'Group (Layer/Band)'
 def get_random_color():
     return np.random.choice(list(mcolors.CSS4_COLORS.values()))
 
-def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var = None, best_param=None, best_ksstat=None):
+def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var = None, best_param=None, 
+                    best_ksstat=None, metric="ksstat"):
     cols = sorted(cols)
     df = df.copy() 
 
@@ -70,7 +71,7 @@ def combo_test_plot(df, cols, extra_boundary = 0.5, plot_name = '', target_var =
     else:
         plt.title(f"{', '.join([col[5:].capitalize() for col in cols])} with boundary {extra_boundary}")
     if len(df) > 0:
-        create_scatter_plot(df=df, metric='ksstat', plot_name=f"KS Stats + {plot_name if plot_name else ''}", log_colorbar=True) 
+        create_scatter_plot(df=df, metric=metric, plot_name=f"{metric} + {plot_name if plot_name else ''}", log_colorbar=True) 
     
     plt.show()
     return fig
