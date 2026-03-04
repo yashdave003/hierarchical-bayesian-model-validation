@@ -388,13 +388,17 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         else:
             r, eta = params
             scale = 1
-        xs_pdf, null_cdf = compute_prior_cdf(r=r, eta=eta, scale = scale, n_samples=n_samples, enforce_assert=False, debug=False, return_xs=True)
+        xs_cdf, null_cdf = compute_prior_cdf(r=r, eta=eta, scale = scale, n_samples=n_samples, enforce_assert=False, debug=False, return_xs=True)
+        if len(sample) > 0 and interval is not None:
+            xs_pdf = np.linspace(interval[0], interval[1], 10000)
+        else:
+            xs_pdf = xs_cdf
         null_pdf = null_cdf.derivative()(xs_pdf)
         
     elif distro == 'gaussian' or distro == 'normal':
         null_cdf = stats.norm(scale=params).cdf
         xs_pdf = np.linspace(-30, 30, 10000)
-        null_pdf = stats.norm(scale=params).pdf(xs)
+        null_pdf = stats.norm(scale=params).pdf(xs_pdf)
     elif distro == 'laplace':
         null_cdf = stats.laplace(scale=params).cdf
         xs_pdf = np.linspace(-30, 30, 10000)
@@ -435,14 +439,18 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
        
         if interval:
             ax3.set_xlim(left = interval[0], right = interval[1])
-        ax3.set_ylim(bottom = 10**-4, top=10)
+        ax3.set_yscale('log')
         
         if len(sample)>0:
             sns.kdeplot(ax = ax3, x = sample, bw_method = bw_log, log_scale=[False, True], label = f"Empirical PDF (KDE, bw={bw_log})")
             if plot_hist:
-                sns.histplot(sample, ax = ax3, binwidth = binwidth, stat = "density", log=True, bins=1000, alpha=0.2, color='#1f77b4', label=f'Empirical PDF ({100-percent_excluded}% of sample)')
+                sns.histplot(sample, ax = ax3, binwidth = binwidth, stat = "density", bins=1000, alpha=0.2, color='#1f77b4', label=f'Empirical PDF ({100-percent_excluded}% of sample)')
 
-        ax3.plot(xs_pdf, null_pdf, label = "Computed PDF")
+        null_pdf_pos = np.where(null_pdf > 0, null_pdf, np.nan)
+        ax3.plot(xs_pdf, null_pdf_pos, label = "Computed PDF")
+        
+        pdf_max = np.nanmax(null_pdf_pos) if np.any(null_pdf_pos > 0) else 1
+        ax3.set_ylim(bottom = pdf_max * 1e-6, top = pdf_max * 10)
         
         if len(sample) == 0:
             ax1.set_title(f'Visualized {distro} CDF with params {params}')
