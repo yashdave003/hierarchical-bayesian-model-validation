@@ -11,6 +11,7 @@ import io
 import shutil
 from tqdm.notebook import tqdm
 import seaborn as sns
+from scipy.stats import ks_2samp
 
 
 USE_MATLAB = False # required for Erblet transforms
