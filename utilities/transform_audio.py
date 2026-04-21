@@ -10,6 +10,8 @@ import zipfile
 import io
 import shutil
 from tqdm.notebook import tqdm
+import seaborn as sns
+from scipy.stats import ks_2samp
 
 
 USE_MATLAB = False # required for Erblet transforms
@@ -539,3 +541,199 @@ def converge(coef_list, freqs, slit1_inv, slit2_inv, pval_threshold, cuts, max_d
       upper_freqs, cuts_2 = converge(coef_list, freqs, [slit2_inv[0], int((slit2_inv[0] + slit2_inv[1]) /2)], [int((slit2_inv[0] + slit2_inv[1]) /2 + 1), slit2_inv[1]], pval_threshold, cuts_1, max_depth)
 
       return lower_freqs + upper_freqs, cuts_1 + cuts_2 
+   
+####################################################
+# for distribution comparison and pickle generation #
+####################################################
+   
+def load_and_combine_data(coefs_npz_path, category_name, group_names, metadata_map):
+    """
+    Loads an NPZ file and merges all internal .npy coefficient files into a single DataFrame.
+    Maps group labels using the external metadata_map (CSV dict).
+    """
+    print(f"  - Loading and combining data from: {os.path.basename(coefs_npz_path)}")
+    
+    df_list = []
+    with np.load(coefs_npz_path, allow_pickle=True) as data:
+        for item in data.files:
+            try:
+                base_filename = item.split('_')[0] 
+                group_label = metadata_map.get(base_filename)
+                
+                if group_label not in group_names:
+                    continue
+                
+                coeffs = data[item]
+                
+                # --- STFT ---
+                if coeffs.ndim == 2:
+                    num_freqs, num_time_frames = coeffs.shape
+                    
+                    # Flatten real and imaginary matrices
+                    real_vals = np.real(coeffs).flatten()
+                    imag_vals = np.imag(coeffs).flatten()
+                    
+                    # Generate corresponding frequency indices
+                    freq_idx_arr = np.repeat(np.arange(num_freqs), num_time_frames)
+                    
+                    # Build DataFrame from arrays
+                    df_list.append(pd.DataFrame({
+                        category_name: group_label,
+                        'freq_index': freq_idx_arr,
+                        'coefficient_real': real_vals,
+                        'coefficient_imag': imag_vals
+                    }))
+
+                elif coeffs.ndim == 1:
+                    # Process jagged arrays
+                    if coeffs.dtype == object:
+                        flattened_coeffs = np.concatenate([np.atleast_1d(arr) for arr in coeffs])
+                        # Calculate data length per frequency for indices
+                        lengths = [len(np.atleast_1d(arr)) for arr in coeffs]
+                        freq_idx_arr = np.repeat(np.arange(len(coeffs)), lengths)
+                    # Process standard 1D arrays
+                    else:
+                        flattened_coeffs = coeffs
+                        freq_idx_arr = np.arange(len(coeffs))
+                        
+                    df_list.append(pd.DataFrame({
+                        category_name: group_label,
+                        'freq_index': freq_idx_arr,
+                        'coefficient_real': np.real(flattened_coeffs),
+                        'coefficient_imag': np.imag(flattened_coeffs)
+                    }))
+
+                else:
+                    print(f"  - Warning: Skipping item '{item}' with unsupported shape {coeffs.shape}")
+                    continue
+
+            except (ValueError, IndexError) as e:
+                print(f"  - Warning: Could not parse filename '{item}', skipped. Error: {e}")
+                continue
+                
+    if not df_list:
+        print("Warning: Could not load any coefficient data from NPZ file.")
+        return pd.DataFrame()
+
+    # Concatenate all DataFrames
+    print(f"  - Concatenating all processed arrays...")
+    return pd.concat(df_list, ignore_index=True)
+
+def compare_distributions_by_band(full_df, unified_bands_indices, category_name, group_names):
+    """
+    using NumPy binary search to do distribution comparison.
+    """
+    if category_name not in full_df.columns:
+        raise KeyError(f"Error: Column '{category_name}' not found in DataFrame.")
+
+    print(f"  - Performing KS test band by band ({group_names[0]} vs {group_names[1]})...")
+
+    # Filter groups, select required columns, and sort by freq_index
+    df1 = full_df[full_df[category_name] == group_names[0]][['freq_index', 'coefficient_real', 'coefficient_imag']].sort_values('freq_index')
+    df2 = full_df[full_df[category_name] == group_names[1]][['freq_index', 'coefficient_real', 'coefficient_imag']].sort_values('freq_index')
+    
+    # Convert to NumPy arrays
+    freqs1, reals1, imags1 = df1['freq_index'].values, df1['coefficient_real'].values, df1['coefficient_imag'].values
+    freqs2, reals2, imags2 = df2['freq_index'].values, df2['coefficient_real'].values, df2['coefficient_imag'].values
+    
+    results = []
+    
+    for start_idx, end_idx in unified_bands_indices:
+        # Binary search for band boundaries
+        left1 = np.searchsorted(freqs1, start_idx, side='left')
+        right1 = np.searchsorted(freqs1, end_idx, side='left')
+        
+        left2 = np.searchsorted(freqs2, start_idx, side='left')
+        right2 = np.searchsorted(freqs2, end_idx, side='left')
+        
+        ks_stat_real, _ = ks_2samp(reals1[left1:right1], reals2[left2:right2])
+        ks_stat_imag, _ = ks_2samp(imags1[left1:right1], imags2[left2:right2])
+        
+        results.append({
+            'band_indices': f'{start_idx}-{end_idx - 1}' if end_idx > start_idx + 1 else str(start_idx),
+            'ks_stat_real': ks_stat_real,
+            'ks_stat_imag': ks_stat_imag,
+        })
+            
+    return pd.DataFrame(results)
+
+def group_coeffs_by_group_band(subgroup_df, unified_bands_indices):
+    """
+    group coefficient data by frequency bands.
+    """
+    band_coeffs_data = {}
+    df_sorted = subgroup_df.sort_values('freq_index')
+    freqs = df_sorted['freq_index'].values
+    reals = df_sorted['coefficient_real'].values
+    imags = df_sorted['coefficient_imag'].values
+
+    for start_idx, end_idx in unified_bands_indices:
+        band_label = f'{start_idx}-{end_idx - 1}' if end_idx > start_idx + 1 else str(start_idx)
+        left_idx = np.searchsorted(freqs, start_idx, side='left')
+        right_idx = np.searchsorted(freqs, end_idx, side='left')
+         
+        if left_idx == right_idx:
+            band_coeffs_data[band_label] = {
+                'real': np.array([], dtype=reals.dtype),
+                'imag': np.array([], dtype=imags.dtype)
+            }
+        else:
+            band_coeffs_data[band_label] = {
+                'real': reals[left_idx:right_idx],
+                'imag': imags[left_idx:right_idx]
+            }  
+    return band_coeffs_data
+
+def visualize_ks_group_distribution(results_dict, group_names, transform_affix, ks_threshold):
+    """
+    plot KS test results.
+    """
+    print("\n" + "#"*60)
+    print(f"### Generating Analysis Report & Plots ###")
+    print("#"*60 + "\n")
+    
+    valid_results = {k: v for k, v in results_dict.items() if not v.empty}
+    
+    if not valid_results:
+        print("❗️No valid data to plot. All experiment results are empty.")
+        return
+
+    # Print text report
+    for experiment_name, result_df in valid_results.items():
+        significant_diffs = result_df[
+            (result_df['ks_stat_real'] > ks_threshold) | 
+            (result_df['ks_stat_imag'] > ks_threshold)
+        ]
+        print(f"--- Results for: {experiment_name.upper()} Bands ({group_names[0]} vs {group_names[1]}) ---")
+        print(f"In {len(result_df)} bands, {len(significant_diffs)} have a difference greater than the threshold {ks_threshold}.")
+        print(result_df.round(3).to_string(index=False))
+        print("\n")
+
+    # Plotting
+    fig, axes = plt.subplots(len(valid_results), 1, figsize=(18, 8 * len(valid_results)), sharex=False)
+    if len(valid_results) == 1: 
+        axes = [axes]
+        
+    fig.suptitle(f'Distribution Difference ({group_names[0].title()} vs {group_names[1].title()}) across Frequency Bands ({transform_affix.upper()})', fontsize=20, weight='bold')
+
+    for ax, (experiment_name, result_df) in zip(axes, valid_results.items()):
+        plot_df = result_df.melt(
+            id_vars=['band_indices'], 
+            value_vars=['ks_stat_real', 'ks_stat_imag'],
+            var_name='Coefficient Part',
+            value_name='KS Statistic'
+        )
+        plot_df['Coefficient Part'] = plot_df['Coefficient Part'].str.replace('ks_stat_', '').str.title()
+
+        sns.barplot(ax=ax, data=plot_df, x='band_indices', y='KS Statistic', hue='Coefficient Part')
+        
+        ax.axhline(y=ks_threshold, color='r', linestyle='--', label=f'Decision Threshold ({ks_threshold})')
+        
+        ax.set_title(f"Banding Method: {experiment_name.title()}", fontsize=16)
+        ax.set_xlabel('Frequency Band (by Index)', fontsize=12)
+        ax.set_ylabel('KS Statistic', fontsize=12)
+        ax.tick_params(axis='x', rotation=45)
+        ax.legend(title='Coefficient Part')
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()

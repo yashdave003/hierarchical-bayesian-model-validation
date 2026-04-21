@@ -17,13 +17,15 @@ def compute_adstat(x, F, true_n=None, sorted_sample=True, eps=1e-16):
     rescale_factor = 1 if true_n is None else true_n / n
     return rescale_factor * (-n - S)
 
-# TODO: determine N automatically via stability condition
 @np.vectorize
-def ad_asymptotic_cdf(z, N=5):
+def ad_asymptotic_cdf(z, N=10):
     '''
     asymptotic cdf of A^2 under H_0 at z using first N terms in expansion
     https://doi.org/10.1214/aoms/1177729437 (pp. 204)
     '''
+    if z > 25:
+        return 1 - ad_asymptotic_surv(z, N)
+
     @np.vectorize
     def term(j):
         t_j = (4*j+1)**2 * np.pi**2 / (8*z)
@@ -31,6 +33,13 @@ def ad_asymptotic_cdf(z, N=5):
         integral = scipy.integrate.quad(integrand, 0, np.inf)[0]
         return integral * scipy.special.binom(-.5, j) * (4*j+1) * np.exp(-t_j)
     return np.sqrt(2 * np.pi) / z * np.sum(term(np.arange(N)))
+
+@np.vectorize
+def ad_asymptotic_surv(z, N=10):
+    if z > 25:
+        y, dy = -26.639351139190342, -1.0192986056281121
+        return np.exp(y + dy * (z - 25))
+    return 1 - ad_asymptotic_cdf(z, N)
 
 
 def gridsearch_ad(sample, all_cdfs, true_n=None, top_k=1, debug=False, scales=None):
