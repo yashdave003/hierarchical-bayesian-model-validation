@@ -269,6 +269,8 @@ def sample_prior(r, eta, size=1, scale=1):
     return x
 
 def round_to_sigfigs(x, num_sigfigs=8):
+    if np.isnan(x) or np.isinf(x):
+        return x
     if x == np.zeros_like(x):
         return 0
     return np.round(x, -int(np.floor(np.log10(abs(x)))-(num_sigfigs-1)))
