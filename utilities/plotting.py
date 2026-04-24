@@ -353,7 +353,7 @@ def visualize_cdf(params, sample = [], distro='gengamma', n_samples=1000, interv
 
 
 
-def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, n_samples=2000, interval = None, provided_loc = None, group=None, percent_excluded=0.1, plot_hist=True, bw = 0.05, bw_log = 0.05, binwidth = None):
+def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, n_samples=2000, interval = None, provided_loc = None, group=None, percent_excluded=0.1, plot_hist=True, bw = 0.05, bw_log = 0.05, binwidth = None, show_tails=False):
     """
     Visualize the gap between the empirical CDF/PDF and the Computed CDF/PDF.
 
@@ -364,13 +364,15 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         n_samples (int): Number of samples for the computed CDF/PDF.
         all_cdfs (dict): Dictionary containing computed CDFs.
         group (int or None): Group index (for titling purposes).
+        show_tails (bool): If True, widens the CDF plot window so 99% of the sample
+            mass is visible (useful for assessing tail fit, e.g. with AD test).
 
     Returns:
         distance (float): The Kolmogorov-Smirnov statistic.
         location (float): The location of the maximum deviation between the empirical and computed CDFs.
     """
     if len(sample) > 0:
-        
+
         lower_bound = np.percentile(sample, percent_excluded/2)
         upper_bound = np.percentile(sample, (100-percent_excluded/2))
         original_sample = sample
@@ -379,7 +381,10 @@ def visualize_cdf_pdf(params, sample=[], distro = 'gengamma', log_scale = True, 
         n = len(sample)
         # If interval not specified, set to include 99% of the data
         if interval is None:
-            interval = (np.percentile(sample, 5), np.percentile(sample, 95))
+            if show_tails:
+                interval = (np.percentile(sample, 0.5), np.percentile(sample, 99.5))
+            else:
+                interval = (np.percentile(sample, 5), np.percentile(sample, 95))
         xs = np.linspace(max(interval[0], np.min(sample)), min(np.max(sample), interval[1]), 2000000)
     
     if distro == 'gengamma':
