@@ -38,15 +38,18 @@ def erblet_file(file_path, verify_reconstruction=False, visualize=False):
 erblet_file.affix = 'erb'
 
 def cwt_file(file_path, wavelet='cmor1.5-1.0', low_freq=80, high_freq=24000, num_scales=100, 
-             visualize=False, title='CWT with Morlet Wavelet'):
+             subsample_every=1, visualize=False, title='CWT with Morlet Wavelet'):
+    '''warning: direct time-domain subsampling can cause aliasing artifacts'''
     rate, signal = wavfile.read(file_path)
     frequencies = np.geomspace(low_freq, high_freq, num_scales)
     scales = pywt.frequency2scale(wavelet, frequencies / rate)
     coefs, freqs = pywt.cwt(signal.astype('float32'), scales, wavelet, 1/rate)
+    coefs = coefs[:, ::subsample_every]
 
     if visualize:
         plt.figure(figsize=(10, 6))
-        plt.pcolormesh(np.arange(len(signal)) / rate, freqs, np.abs(coefs), norm='log', cmap='inferno', vmin=100)
+        plt.pcolormesh(np.arange(coefs.shape[1]) * subsample_every / rate, 
+                       freqs, np.abs(coefs), norm='log', cmap='inferno', vmin=100)
         plt.colorbar(label='Magnitude')
         plt.yscale('log')
         plt.ylabel('Frequency (Hz)')
