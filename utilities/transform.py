@@ -16,6 +16,7 @@ import nibabel as nib
 from scipy import ndimage
 from time import sleep
 from tqdm.notebook import tqdm
+import os
 
 
 def npz_opener(path):
@@ -154,6 +155,8 @@ def convert_fourier_list(folder_dir, c, coord_df = None, debug = False, image_op
     mag_flat = np.concatenate(np.array(mag_arr).T)
     return sample, mag_flat
 
+##NEW 02/03/2025
+
 def recursive_split(freqs, mags, threshold =0.05, max_depth = 5, presplit = 0):
     magnitude_splits = []
     def recursive_helper(freqs, mags, magnitude_splits, depth, presplit):
@@ -176,6 +179,112 @@ def recursive_split(freqs, mags, threshold =0.05, max_depth = 5, presplit = 0):
             print(f"Recursion Depth Exceeded Endpoints are {mags[0]} and {mags[-1]}")
     recursive_helper(freqs, mags, magnitude_splits, max_depth, presplit)
     return magnitude_splits
+
+# def _ensure_2d(img):
+#     arr = np.array(img)
+#     arr = np.squeeze(arr)
+#     if arr.ndim != 2:
+#         raise ValueError(f"Expected single-channel 2D image, got shape {arr.shape}")
+#     return arr
+
+# def convert_fourier_list_single(
+#     folder_dir,
+#     coord_df=None,
+#     debug=False,
+#     image_opener=None,
+#     image_func=None,
+# ):
+#     file_list = [
+#         os.path.join(folder_dir, fn)
+#         for fn in os.listdir(folder_dir)
+#         if fn != ".DS_Store"
+#     ]
+#     file_list.sort()
+
+#     if len(file_list) == 0:
+#         raise FileNotFoundError(f"No files found in {folder_dir}")
+
+#     # Load first image to build coord_df if needed
+#     if image_opener is not None:
+#         img0 = _ensure_2d(image_opener(file_list[0]))
+#     else:
+#         img0 = _ensure_2d(Image.open(file_list[0]))
+
+#     if image_func is not None:
+#         img0 = _ensure_2d(image_func(img0))
+
+#     if coord_df is None:
+#         coord_df = getIndexDF(img0, no_zero=False).sort_values(["magnitude"])
+
+#     x = coord_df["x_index"].to_numpy()
+#     y = coord_df["y_index"].to_numpy()
+#     magnitudes = coord_df["magnitude"]
+
+#     freq_arr = [0] * len(file_list)
+#     mag_arr = [0] * len(file_list)
+
+#     loop = range(len(file_list))
+#     if debug:
+#         from tqdm import tqdm
+#         loop = tqdm(loop)
+
+#     for k in loop:
+#         if image_opener is not None:
+#             img = _ensure_2d(image_opener(file_list[k]))
+#         else:
+#             img = _ensure_2d(Image.open(file_list[k]))
+
+#         if image_func is not None:
+#             img = _ensure_2d(image_func(img))
+
+#         transformed = np.array(fft.fft2(img, norm="ortho"))
+#         freq_arr[k] = transformed[x, y]
+#         mag_arr[k] = magnitudes
+
+#     sample = np.concatenate(np.array(freq_arr).T)
+#     mag_flat = np.concatenate(np.array(mag_arr).T)
+#     return sample, mag_flat
+
+
+def convert_fourier_list_single(folder_dir, c, coord_df = None, debug = False, image_opener = None, image_func = None):
+    file_list = [os.path.join(folder_dir, filename) for filename in os.listdir(folder_dir) if filename != ".DS_Store"]
+    if image_opener!= None:
+        image = image_opener(file_list[0])
+    else:
+        image = np.array(Image.open(file_list[0]).convert('L'))
+    if coord_df is None:
+        coord_df = getIndexDF(image, no_zero =False).sort_values(["magnitude"])
+    x = coord_df["x_index"].to_numpy()
+    y = coord_df["y_index"].to_numpy()
+    magnitudes = coord_df["magnitude"]
+    freq_arr = [0]*len(file_list)
+    mag_arr = [0]*len(file_list)
+    if debug:
+        loop = tqdm(range(len(file_list)))
+    else:
+        loop = range(len(file_list))
+    for k in loop:
+        if c >= 3:
+            if image_opener != None:
+                image = rgb2gray(image_opener(file_list[k]))
+            else:
+                image = Image.open(file_list[k]).convert('L')
+        else:
+            if image_opener != None:
+                image = image_opener(file_list[k])[:,:,c]
+            else:
+                image = np.array(Image.open(file_list[k]))[:,:,c]
+        if image_func != None:
+            image = image_func(image)
+
+        transformed = np.array(fft.fft2(image, norm='ortho'))
+        freq_arr[k] = transformed[tuple(x), tuple(y)]
+        mag_arr[k] = magnitudes
+    sample = np.concatenate(np.array(freq_arr).T)
+    mag_flat = np.concatenate(np.array(mag_arr).T)
+    return sample, mag_flat
+
+#End New
 
 
 
@@ -217,6 +326,49 @@ def convert_to_fourier_basis(folder_dir, color, threshold =0.05, max_depth = 5, 
         prev = next_idx
 
     return df
+
+##NEW 02/03/2025
+
+def convert_to_fourier_basis_single(folder_dir, color, threshold =0.05, max_depth = 5, presplit = 0, combine_complex = True, split_list = None, coord_df = None, debug = False, image_opener = None, image_func = None):
+    color_dict = {"red":0, "green":1, "blue":2, "gray":3, "infrared": 4}
+    c = color_dict[color]
+    freqs, mags = convert_fourier_list_single(folder_dir, c, coord_df = coord_df, debug = debug, image_opener= image_opener, image_func = image_func)
+    df = pd.DataFrame(columns=["band", "channel", "magnitude_endpoints","unique_magnitudes", "data"])
+
+    if split_list == None:
+        mag_splits = recursive_split(freqs, mags, threshold, max_depth, presplit)
+    else:
+        mag_splits = split_list
+    
+    sorted_mag_split = np.sort(mag_splits)
+    print(sorted_mag_split)
+    sleep(0.3)
+    prev = 0
+    if debug:
+        loop = tqdm(range(len(mag_splits)))
+    else:
+        loop = range(len(mag_splits))
+    for i in loop:
+        next_idx = np.argmax(mags>=sorted_mag_split[i])
+        if next_idx == 0:
+            next_idx = len(mags)
+
+        if combine_complex:
+            next_freqs = np.concatenate([np.real(freqs[prev:next_idx]),np.imag(freqs[prev:next_idx])])
+        else:
+            next_freqs = freqs[prev:next_idx]
+        num_mags = len(np.unique(mags[prev:next_idx]))
+        if len(mags[prev:next_idx]) != 0:
+            mag_endpoints = (min(mags[prev:next_idx]), max(mags[prev:next_idx]))
+        else:
+            mag_endpoints = (None, None)
+
+        df.loc[len(df.index)] = [i+1, color, mag_endpoints, num_mags, next_freqs]
+        prev = next_idx
+
+    return df
+
+#End New
 
 def getSplits(minfreq, maxfreq, mult):
     arr = [minfreq]
