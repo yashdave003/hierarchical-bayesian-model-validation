@@ -1,4 +1,4 @@
-﻿# %% [markdown]
+# %% [markdown]
 # ## Setup, Loading Data and CDFs
 
 # %%
@@ -487,7 +487,6 @@ print("Finished job for", DATA_NAME, TRANSFORM, CHANNEL, "at", datetime.datetime
 
 
 # %%
-
 
 
 
