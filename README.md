@@ -8,4 +8,4 @@ See [here](https://docs.google.com/document/d/1bBUmmVPJHOpUFxWIu6bYyut-KsbTFVuLJ
 
 # Pipeline for New Images team
 
-See [here] (https://docs.google.com/document/d/1TS-nvvEqb6vUTT-WfVn_O953EV9HxRSHswSoyBf84Fs/edit?tab=t.0)
+See [here](https://docs.google.com/document/d/1TS-nvvEqb6vUTT-WfVn_O953EV9HxRSHswSoyBf84Fs/edit?tab=t.0)
