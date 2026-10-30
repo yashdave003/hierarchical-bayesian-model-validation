@@ -55,8 +55,13 @@ group_data_map = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio",
 group_total_samples = pd.read_pickle(os.path.join(ROOT_DIR, "transformed-data-audio", "subsample-data", f'{FULL_DATA_NAME}-size.pickle'))
 
 # %%
-if 'erb' in TRANSFORM:
-    group_data_map.popitem()
+# Drop any zero-variance bands (e.g. Nyquist or DC in imaginary components, or empty bands)
+zero_var_keys = [k for k, v in group_data_map.items() if len(v) == 0 or np.isclose(np.var(v), 0)]
+for k in zero_var_keys:
+    group_data_map.pop(k, None)
+    group_total_samples.pop(k, None)
+if zero_var_keys:
+    print(f"Dropped zero-variance bands: {zero_var_keys}")
 NUM_BANDS = max(min(NUM_BANDS, len(group_data_map) - 2), 1)
 
 # %%
